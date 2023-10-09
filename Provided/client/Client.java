@@ -2,9 +2,6 @@
 
 import java.net.*;
 import java.io.*;
-import java.nio.*;
-import java.nio.channels.*;
-import java.util.*;
 
 public class Client {
 
@@ -27,6 +24,8 @@ public class Client {
             out.flush();
             in = new ObjectInputStream(requestSocket.getInputStream());
 
+            handshake(in);
+
             //get Input from standard input
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
 
@@ -36,6 +35,7 @@ public class Client {
                 message = bufferedReader.readLine();
                 //Send the sentence to the server
                 sendMessage(message);
+
                 //Receive the upperCase sentence from the server
                 MESSAGE = (String)in.readObject();
                 //show the message to the user
@@ -67,6 +67,25 @@ public class Client {
         }
     }
 
+    void handshake(ObjectInputStream in){
+        //Send initial handshake message when you connect
+        sendHandshakeMessage();
+        System.out.println("Sent handshake");
+        try{
+            //Wait for handshake response from server
+            String handshakeResponse = (String)in.readObject();
+            System.out.println("Received handshake Response: " + handshakeResponse);
+
+            //   Verify Handshake Response
+            //------(Insert Code here)------
+
+        }catch(IOException ioException){
+            ioException.printStackTrace();
+        }
+        catch (ClassNotFoundException e ) {
+            System.err.println("Class not found");
+        }
+    }
     //send a message to the output stream
     void sendMessage(String msg) {
         try{
@@ -77,6 +96,40 @@ public class Client {
         catch(IOException ioException){
             ioException.printStackTrace();
         }
+    }
+
+    void sendHandshakeMessage() {
+        String header = "P2PFILESHARINGPROJ";
+        String zeros = "0000000000";
+        //Insert Correct PeerID from config file
+        int peerID = 88;
+
+        //Convert everything to bytes
+        byte[] headerBytes = header.getBytes();
+        byte[] zeroBytes = zeros.getBytes();
+        byte[] idBytes = intToByteArray(peerID);
+
+        //Initialize 32 byte container
+        byte[] msg = new byte[32];
+
+        //Copy bytes into the array
+        System.arraycopy(headerBytes,0, msg, 0, 18);
+        System.arraycopy(zeroBytes, 0, msg, 18, 10);
+        System.arraycopy(idBytes, 0, msg, 28, 4);
+
+        //Do we want to send as byte[] or as String
+        String msgString = new String(msg);
+        sendMessage(msgString);
+    }
+
+    byte[] intToByteArray(int value)
+    {
+        byte[] intBytes = new byte[4];
+        intBytes[0] = (byte) (value >> 24 & 0xFF);
+        intBytes[1] = (byte) (value >> 16 & 0xFF);
+        intBytes[2] = (byte) (value >> 8 & 0xFF);
+        intBytes[3] = (byte) (value & 0xFF);
+        return intBytes;
     }
 
     //main method

@@ -2,9 +2,6 @@
 
 import java.net.*;
 import java.io.*;
-import java.nio.*;
-import java.nio.channels.*;
-import java.util.*;
 
 public class Server {
     private static final int sPort = 8000; //The server will be listening on this port number
@@ -48,12 +45,11 @@ public class Server {
                 out.flush();
                 in = new ObjectInputStream(connection.getInputStream());
                 try{
+                    handshake(in);
+
                     while(true) {
-                        //receive the message sent from the client
                         message = (String)in.readObject();
-                        //show the message to the user
-                        System.out.println("Receive message: " + message + "
-                        from client " + no);
+                        System.out.println("Receive message: " + message + " from client " + no);
                         //Capitalize all letters in the message
                         MESSAGE = message.toUpperCase();
                         //send MESSAGE back to the client
@@ -79,7 +75,57 @@ public class Server {
                 }
             }
         }
+        byte[] intToByteArray(int value)
+        {
+            byte[] intBytes = new byte[4];
+            intBytes[0] = (byte) (value >> 24 & 0xFF);
+            intBytes[1] = (byte) (value >> 16 & 0xFF);
+            intBytes[2] = (byte) (value >> 8 & 0xFF);
+            intBytes[3] = (byte) (value & 0xFF);
+            return intBytes;
+        }
+        public void sendHandshakeMessage() {
+            String header = "P2PFILESHARINGPROJ";
+            String zeros = "0000000000";
+            //Insert Correct PeerID from config file
+            int peerID = 69;
 
+            //Convert everything to bytes
+            byte[] headerBytes = header.getBytes();
+            byte[] zeroBytes = zeros.getBytes();
+            byte[] idBytes = intToByteArray(peerID);
+
+            //Initialize 32 byte container
+            byte[] msg = new byte[32];
+
+            //Copy bytes into the array
+            System.arraycopy(headerBytes, 0, msg, 0, 18);
+            System.arraycopy(zeroBytes, 0, msg, 18, 10);
+            System.arraycopy(idBytes, 0, msg, 28, 4);
+
+            //Do we want to send as byte[] or as String??
+            String msgString = new String(msg);
+            sendMessage(msgString);
+        }
+        public void handshake(ObjectInputStream in) {
+            try {
+                //Wait for handshake request from client
+                String clientmessage = (String)in.readObject();
+                System.out.println("Handshake: " + clientmessage + " from client " + no);
+
+                //   Verify Correct Handshake
+                //------(Insert Code here)------
+                //   Continue to sending messages
+
+                //Send handshake response back to client
+                sendHandshakeMessage();
+                System.out.println("Sent handshake");
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                System.err.println("Class not found");
+            }
+        }
         //send a message to the output stream
         public void sendMessage(String msg) {
             try{
