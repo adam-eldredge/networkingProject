@@ -4,6 +4,20 @@ import java.io.*;
 public class Peer {
     // Parent class for client and server
     int peerID = 0;
+    // peerBitfield = [[0   -   0   -   0   -   1   -   0]
+    //                 [1   -   1   -   0   -   0   -   1]
+    //                 [1   -   1   -   0   -   0   -   1]]
+
+    // peerBitfield = [[1   -   0   -   0   -   1   -   0]
+    //                 [1   -   0   -   0   -   0   -   1]
+    //                 [1   -   1   -   0   -   0   -   1]]
+
+    // Structure Connection {
+        their idBytes
+        their bitfield
+        info about them
+        our state (choked, unchoked, uninterested)
+    }
 
     // decode message - returns message type with payload
     public string decodeMessage(String msg) {
@@ -15,8 +29,7 @@ public class Peer {
             int type = Integer.parseInt(msg.Substring(5,6));
 
             if (type == 0) {
-                // Choke, Unchoke, Interested, or not interested
-                // No payload
+                handle0();
             }
             else if (type == 1) {
                 // Have
@@ -62,6 +75,12 @@ public class Peer {
         return intBytes;
     }
 
+    5() {
+        // look at your bitfield and theirs
+        // If they have something you want, send the interested message
+        // If not, send uninterested
+
+    }
     public void sendHandshakeMessage() {
         String header = "P2PFILESHARINGPROJ";
         String zeros = "0000000000";

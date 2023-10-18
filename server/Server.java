@@ -33,6 +33,10 @@ public class Server extends Peer {
         private ObjectOutputStream out; //stream write to the socket
         private int no; //The index number of the client
 
+        // state
+        // their bitfield
+        // etc
+
         public Handler(Socket connection, int no) {
             this.connection = connection;
             this.no = no;
@@ -49,6 +53,10 @@ public class Server extends Peer {
 
                     while(true) {
                         message = (String)in.readObject();
+                        pair(type, payload) = peer.decodeMessage(message);
+                        switch (type)
+                        case 1:
+
                         System.out.println("Receive message: " + message + " from client " + no);
                         //Capitalize all letters in the message
                         MESSAGE = message.toUpperCase();
