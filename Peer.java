@@ -1,70 +1,83 @@
 import java.net.*;
 import java.io.*;
+import javafx.util;
 
 public class Peer {
-    // Parent class for client and server
-    int peerID = 0;
-    // peerBitfield = [[0   -   0   -   0   -   1   -   0]
-    //                 [1   -   1   -   0   -   0   -   1]
-    //                 [1   -   1   -   0   -   0   -   1]]
-
-    // peerBitfield = [[1   -   0   -   0   -   1   -   0]
-    //                 [1   -   0   -   0   -   0   -   1]
-    //                 [1   -   1   -   0   -   0   -   1]]
-
-    // Structure Connection {
-        their idBytes
-        their bitfield
-        info about them
-        our state (choked, unchoked, uninterested)
+    // Class to maintain state information about connections
+    class State {
+        public boolean choked = false;
+        public boolean interested = false;
     }
 
-    // decode message - returns message type with payload
-    public string decodeMessage(String msg) {
-        try {
-            // First 4 bytes are message length
-            int length = Integer.parseInt(msg.Substring(0,4));
+    // Class to maintain connections
+    class Connection {
+        public int peerID;
+        public int[] peerBitfield;
+        public State state;
+    }
 
-            // Next byte is message type
+    // Parent class for client and server
+    int ID = 0;
+    int[] bitfield;
+    int bitFieldSize;
+    Connection[] connections;
+
+    // decode message - returns message type with payload
+    public void decodeMessage(String msg) {
+        try {
+            
+            int length = Integer.parseInt(msg.Substring(0,4));
             int type = Integer.parseInt(msg.Substring(5,6));
 
             if (type == 0) {
-                handle0();
+                handleChoke();
             }
             else if (type == 1) {
-                // Have
+                handleUnchoke();
             }
             else if (type == 2) {
-                // Have
+                handleInterested();
             }
             else if (type == 3) {
-                // Have
+                handleUninterested();
             }
             else if (type == 4) {
-                // Have
+                handleHave(int len);
             }
             else if (type == 5) {
-                // Bitfield - 4 byte piece index field
+                handleBitfield(int len);
             }
             else if (type == 6) {
-                // Request - 4 byte piece index field
+                handleRequest(int len);
             }
             else if (type == 7) {
-                // Piece - 4 byte piece index field and the content of the piece
+                handlePiece(int len);
             }
             else {
                 // Something is wrong
+                break;
             }
-
-            // End is payload
-            String payload = msg.Substring(6,(6 + length));
-
-            return payload;
         }
         catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    public void handleChoke() { /* TODO */ }
+
+    public void handleUnchoke() { /* TODO */ }
+
+    public void handleInterested() { /* TODO */ }
+
+    public void handleUninterested() { /* TODO */ }
+
+    public void handleHave(int len) { /* TODO */}
+
+    public void handleBitfield(int len) { /* TODO */ }
+
+    public void handleRequest(int len) { /* TODO */ }
+
+    public void handlePiece(int len) { /* TODO */ }
 
     byte[] intToByteArray(int value) {
         byte[] intBytes = new byte[4];
