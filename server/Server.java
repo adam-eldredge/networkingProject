@@ -53,9 +53,7 @@ public class Server extends Peer {
 
                     while(true) {
                         message = (String)in.readObject();
-                        pair(type, payload) = peer.decodeMessage(message);
-                        switch (type)
-                        case 1:
+                        peer.handleMessage(message);
 
                         System.out.println("Receive message: " + message + " from client " + no);
                         //Capitalize all letters in the message

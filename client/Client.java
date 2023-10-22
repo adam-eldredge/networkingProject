@@ -69,15 +69,16 @@ public class Client extends Peer {
 
     void handshake(ObjectInputStream in){
         //Send initial handshake message when you connect
-        sendHandshakeMessage();
+        peer.sendHandshakeMessage();
         System.out.println("Sent handshake");
+
         try{
             //Wait for handshake response from server
             String handshakeResponse = (String)in.readObject();
             System.out.println("Received handshake Response: " + handshakeResponse);
 
             //   Verify Handshake Response
-            //------(Insert Code here)------
+            peer.verifyHandshakeResponse(handshakeResponse, 0/* [INSERT EXPECTED PEER ID] */);
 
         }catch(IOException ioException){
             ioException.printStackTrace();
