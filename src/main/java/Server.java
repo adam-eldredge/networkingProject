@@ -1,3 +1,4 @@
+package src.main.java;
 // Code provided to us from the CNT4007 canvas page files/Project/Sample Server.java
 
 import java.net.*;
@@ -5,6 +6,11 @@ import java.io.*;
 
 public class Server extends Peer {
     private static final int sPort = 8000; //The server will be listening on this port number
+    private static Peer peer = null;
+
+    public Server(Peer p) {
+        peer = p;
+    }
 
     public static void main(String[] args) throws Exception {
         System.out.println("The server is running.");
@@ -12,7 +18,7 @@ public class Server extends Peer {
         int clientNum = 1;
         try {
             while(true) {
-                new Handler(listener.accept(),clientNum).start();
+                new Handler(listener.accept(),clientNum, peer).start();
                 System.out.println("Client " + clientNum + " is connected!");
                 clientNum++;
             }
@@ -32,14 +38,16 @@ public class Server extends Peer {
         private ObjectInputStream in; //stream read from the socket
         private ObjectOutputStream out; //stream write to the socket
         private int no; //The index number of the client
+        private Peer peer; // Parent peer
 
         // state
         // their bitfield
         // etc
 
-        public Handler(Socket connection, int no) {
+        public Handler(Socket connection, int no, Peer peer) {
             this.connection = connection;
             this.no = no;
+            this.peer = peer;
         }
 
         public void run() {
@@ -53,7 +61,7 @@ public class Server extends Peer {
 
                     while(true) {
                         message = (String)in.readObject();
-                        peer.handleMessage(message);
+                        //handleMessage(message);
 
                         System.out.println("Receive message: " + message + " from client " + no);
                         //Capitalize all letters in the message
@@ -94,7 +102,7 @@ public class Server extends Peer {
                 //   Continue to sending messages
 
                 //Send handshake response back to client
-                sendHandshakeMessage();
+                //sendHandshakeMessage();
                 System.out.println("Sent handshake");
             } catch (IOException ioException) {
                 ioException.printStackTrace();

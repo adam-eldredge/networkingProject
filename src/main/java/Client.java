@@ -1,3 +1,4 @@
+package src.main.java;
 // Code provided to us from the CNT4007 canvas page files/Project/Sample Client.java
 
 import java.net.*;
@@ -10,8 +11,11 @@ public class Client extends Peer {
     ObjectInputStream in; //stream read from the socket
     String message; //message send to the server
     String MESSAGE; //capitalized message read from the server
+    Peer peer; // Parent peer of this client
 
-    public void Client() {}
+    public Client(Peer p) {
+        peer = p;
+    }
 
     void run() {
         try {
@@ -89,8 +93,8 @@ public class Client extends Peer {
     }
 
     //main method
-    public static void main(String args[]) {
-        Client client = new Client();
-        client.run();
-    }
+    // public static void main(String args[]) {
+    //     Client client = new Client();
+    //     client.run();
+    // }
 }

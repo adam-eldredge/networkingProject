@@ -1,8 +1,8 @@
+package src.main.java;
+
 import java.net.*;
 import java.io.*;
-import java.javafx.util;
-import client.Client;
-import server.Server;
+
 
 public class Peer {
     // Class to maintain state information about connections
@@ -20,8 +20,8 @@ public class Peer {
 
     // Parent class for client and server
     int ID = 0;
-    Client client = new Client();
-    Server server = new Server();
+    Client client = new Client(this);
+    Server server = new Server(this);
     int[] bitfield;
     int bitFieldSize;
     Connection[] connections;
@@ -30,8 +30,8 @@ public class Peer {
     public void handleMessage(String msg) {
         try {
             
-            int length = Integer.parseInt(msg.Substring(0,4));
-            int type = Integer.parseInt(msg.Substring(5,6));
+            int length = Integer.parseInt(msg.substring(0,4));
+            int type = Integer.parseInt(msg.substring(5,6));
 
             if (type == 0) {
                 handleChoke();
@@ -46,23 +46,23 @@ public class Peer {
                 handleUninterested();
             }
             else if (type == 4) {
-                handleHave(len);
+                handleHave(length);
             }
             else if (type == 5) {
-                handleBitfield(msg.Substring(6, 6 + length));
+                handleBitfield(msg.substring(6, 6 + length));
             }
             else if (type == 6) {
-                handleRequest(len);
+                handleRequest(length);
             }
             else if (type == 7) {
-                handlePiece(len);
+                handlePiece(length);
             }
             else {
                 // Something is wrong
-                break;
+                return;
             }
         }
-        catch (IOException e) {
+        catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -78,7 +78,7 @@ public class Peer {
 
     public void handleHave(int len) { /* TODO */}
 
-    public boolean handleBitfield(string bitfield) {
+    public boolean handleBitfield(String bitfield) {
         if (bitfield.length() == 0) {
             // Peer does not yet have anything
         }
@@ -86,7 +86,7 @@ public class Peer {
             // We need to compare the two bitfields and keep track of which bits we are interested in
             boolean interested = false;
             for (int i = 0; i < /* Insert Bitfield Length */10; i++) {
-                if ((bitfield[i] + connections[0].peerBitfield[i]) % 2 == 1) {
+                if (((int)bitfield.charAt(i) + connections[0].peerBitfield[i]) % 2 == 1) {
                     interested = true;
                 }
             }
@@ -98,6 +98,9 @@ public class Peer {
                 // Function to send an uninterested message to the peer
             }
         }
+
+
+        return true;
     }
 
     public void handleRequest(int len) { /* TODO */ }
@@ -138,14 +141,14 @@ public class Peer {
     }
 
     // Handshake response verification
-    public boolean verifyHandshakeResponse(string msg, int expectedID) { /* TODO */}
+    public boolean verifyHandshakeResponse(String msg, int expectedID) { /* TODO */ return true;}
 
     //send a message to the output stream
     public void sendMessage(String msg) {
         try {
             //stream write the message
-            out.writeObject(msg);
-            out.flush();
+            client.out.writeObject(msg);
+            client.out.flush();
         }
         catch(IOException ioException) {
             ioException.printStackTrace();
