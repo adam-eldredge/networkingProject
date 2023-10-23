@@ -68,17 +68,17 @@ public class Server {
                     handshake(in);
 
                     while(true) {
-                        message = (String)in.readObject();
-                        peer.handleMessage(message);
+                        // message = (String)in.readObject();
+                        // peer.handleMessage(message);
 
-                        System.out.println("Receive message: " + message + " from client " + no);
-                        //Capitalize all letters in the message
-                        MESSAGE = message.toUpperCase();
-                        //send MESSAGE back to the client
-                        sendMessage(MESSAGE);
+                        // System.out.println("Receive message: " + message + " from client " + no);
+                        // //Capitalize all letters in the message
+                        // MESSAGE = message.toUpperCase();
+                        // //send MESSAGE back to the client
+                        // sendMessage(MESSAGE);
                     }
                 }
-                catch(ClassNotFoundException classnot){
+                catch(/*ClassNotFoundException */ Exception classnot){
                     System.err.println("Data received in unknown format");
                 }
             }
@@ -106,10 +106,11 @@ public class Server {
                 System.out.println("Handshake: " + clientmessage + " from client " + no);
 
                 /* VERIFY HANDSHAKE */
-                boolean verified = peer.verifyHandshakeResponse(clientmessage, true, 0 /* Expected client number */);
+                boolean verified = verifyHandshakeResponse(clientmessage);
 
                 if (verified) {
-                    peer.sendHandshakeMessage();
+                    System.out.println("Handshake verified.");
+                    sendHandshakeMessage(peer.ID);
                     System.out.println("Sent handshake");
                 }
                 else {
@@ -123,6 +124,27 @@ public class Server {
             } catch (RuntimeException runtimeException) {
                 System.err.println("Handshake was not verified");
             }
+        }
+
+        public void sendHandshakeMessage(int pID) {
+    
+            String header = "P2PFILESHARINGPROJ";
+            String zeros = "0000000000";
+            String id = String.valueOf(pID);
+    
+            //Do we want to send as byte[] or as String??
+            String msgString = header + zeros + id;
+            sendMessage(msgString);
+        }
+    
+        // Handshake response verification
+        public boolean verifyHandshakeResponse(String msg) {
+            String Header = msg.substring(0,18);
+            String zero = msg.substring(18,28); 
+    
+            if (!Header.equals("P2PFILESHARINGPROJ") || !zero.equals("0000000000")) { return false; }
+    
+            return true;
         }
 
         //send a message to the output stream

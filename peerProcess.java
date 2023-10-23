@@ -1,33 +1,40 @@
 import java.net.*;
+import java.util.Vector;
 import java.util.Scanner;
 import java.io.*;
+import java.math.BigInteger;
 
 public class peerProcess {
     
     class Connection {
         public int peerID;
+        public String hostName;
+        public int portNum;
+        public boolean hasFile;
+
+        // Bitfield information
         public int[] peerBitfield;
         
         // State variables
         public boolean choked = false; // Are they set to choked from us to them (not them to us)
         public boolean interested = false;
+
+        public Client peerClient = null;
     }
 
     public peerProcess(int id) {
         this.ID = id;
-        this.client = new Client(this);
         this.server = new Server(this);
     }
 
     // Peer variables
-    int             ID              = 0;
-    int             bitFieldSize;
-    int[]           bitfield;
-    Client          client          = null;
-    Server          server          = null;
-    Connection[]    connections;
-    Connection[]    prefferedConnections;
-    Connection      optimisticallyUnchoked;
+    int                     ID              = 0;
+    int                     bitFieldSize;
+    int[]                   bitfield;
+    Server                  server          = null;
+    Vector<Connection>   connections     = new Vector<>();
+    Vector<Connection>   prefferedConnections;
+    Connection              optimisticallyUnchoked;
 
     // Common variables
     int numPrefferedConnections;
@@ -43,12 +50,6 @@ public class peerProcess {
         try {
             /* START SERVER */
             server.run();
-            // Server listens
-
-            /* START CLIENT */
-            client.run();
-            // Check the already running peerProcesses that we need to store somewhere somehow
-            // Send a handshake to them and send the bitmap
         }
         catch (Exception e) {
             System.out.println("Something went wrong");
@@ -142,62 +143,6 @@ public class peerProcess {
 
     public void handlePiece(int len) { /* TODO */ }
 
-    byte[] intToByteArray(int value) {
-        byte[] intBytes = new byte[4];
-        intBytes[0] = (byte) (value >> 24 & 0xFF);
-        intBytes[1] = (byte) (value >> 16 & 0xFF);
-        intBytes[2] = (byte) (value >> 8 & 0xFF);
-        intBytes[3] = (byte) (value & 0xFF);
-        return intBytes;
-    }
-
-    public void sendHandshakeMessage() {
-        String header = "P2PFILESHARINGPROJ";
-        String zeros = "0000000000";
-        //Insert Correct PeerID from config file
-        int peerID = 69;
-
-        //Convert everything to bytes
-        byte[] headerBytes = header.getBytes();
-        byte[] zeroBytes = zeros.getBytes();
-        byte[] idBytes = intToByteArray(peerID);
-
-        //Initialize 32 byte container
-        byte[] msg = new byte[32];
-
-        //Copy bytes into the array
-        System.arraycopy(headerBytes, 0, msg, 0, 18);
-        System.arraycopy(zeroBytes, 0, msg, 18, 10);
-        System.arraycopy(idBytes, 0, msg, 28, 4);
-
-        //Do we want to send as byte[] or as String??
-        String msgString = new String(msg);
-        sendMessage(msgString);
-    }
-
-    // Handshake response verification
-    public boolean verifyHandshakeResponse(String msg, boolean server, int expectedID) { 
-        if (server) {
-            
-        }
-        else {
-
-        }
-        return true;
-    }
-
-    //send a message to the output stream
-    public void sendMessage(String msg) {
-        try {
-            //stream write the message
-            client.out.writeObject(msg);
-            client.out.flush();
-        }
-        catch(IOException ioException) {
-            ioException.printStackTrace();
-        }
-    }
-
     public void setup() {
         try {
             File common = new File("Common.cfg");
@@ -231,6 +176,47 @@ public class peerProcess {
         }
         catch (FileNotFoundException e) {
             System.out.println("Could not find file");
+        }
+
+        // Now read the PeerInfo file and attempt to make connections to each of the prior peers
+        try {
+            File peers = new File("PeerInfo.cfg");
+            Scanner peerReader = new Scanner(peers);
+
+            while (peerReader.hasNextLine()) {
+                String peerLine = peerReader.nextLine();
+                String[] components = peerLine.split(" ");
+
+                // Check the host ID
+                int pID = Integer.parseInt(components[0]);
+                if (this.ID == pID) break;
+                else {
+                    // Connect our peer to the other peer
+                    Connection priorPeer = new Connection();
+
+                    // Set the peer variables
+                    priorPeer.peerID = pID;
+                    priorPeer.hostName = components[1];
+                    priorPeer.portNum = Integer.parseInt(components[2]);
+                    priorPeer.hasFile = (Integer.parseInt(components[3]) != 0);
+
+                    // Add connection to this peers list of connections
+                    this.connections.add(priorPeer);
+                }
+            }
+
+            peerReader.close();
+        }
+        catch (FileNotFoundException e) {
+            System.out.println("Could not find file");
+        }
+    
+        // Now make connections to all prior peers found
+        for (int i = 0; i < this.connections.size(); i++) {
+            System.out.println("Creating client to connect to peer: " + connections.get(i).peerID);
+            Connection current = connections.get(i);
+            current.peerClient = new Client(this, current.hostName, current.portNum, current.peerID);
+            current.peerClient.run();
         }
     }
 
