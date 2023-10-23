@@ -1,19 +1,16 @@
-package src.main.java;
-// Code provided to us from the CNT4007 canvas page files/Project/Sample Client.java
-
 import java.net.*;
 import java.io.*;
 
-public class Client extends Peer {
+public class Client {
 
     Socket requestSocket; //socket connect to the server
     ObjectOutputStream out; //stream write to the socket
     ObjectInputStream in; //stream read from the socket
     String message; //message send to the server
     String MESSAGE; //capitalized message read from the server
-    Peer peer; // Parent peer of this client
+    peerProcess peer; // Parent peer of this client
 
-    public Client(Peer p) {
+    public Client(peerProcess p) {
         peer = p;
     }
 
@@ -38,7 +35,7 @@ public class Client extends Peer {
                 //read a sentence from the standard input
                 message = bufferedReader.readLine();
                 //Send the sentence to the server
-                sendMessage(message);
+                peer.sendMessage(message);
 
                 //Receive the upperCase sentence from the server
                 MESSAGE = (String)in.readObject();

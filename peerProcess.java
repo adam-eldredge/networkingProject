@@ -1,30 +1,36 @@
-package src.main.java;
-
 import java.net.*;
 import java.io.*;
 
-
-public class Peer {
-    // Class to maintain state information about connections
-    class State {
+public class peerProcess {
+    
+    class Connection {
+        public int peerID;
+        public int[] peerBitfield;
+        
+        // State variables
         public boolean choked = false; // Are they set to choked from us to them (not them to us)
         public boolean interested = false;
     }
 
-    // Class to maintain connections
-    class Connection {
-        public int peerID;
-        public int[] peerBitfield;
-        public State state;
+    public peerProcess(int id) {
+        this.ID = id;
+        this.client = new Client(this);
+        this.server = new Server(this);
     }
 
-    // Parent class for client and server
-    int ID = 0;
-    Client client = new Client(this);
-    Server server = new Server(this);
-    int[] bitfield;
-    int bitFieldSize;
-    Connection[] connections;
+    // Peer variables
+    int             ID              = 0;
+    int             bitFieldSize;
+    int[]           bitfield;
+    Client          client          = null;
+    Server          server          = null;
+    Connection[]    connections;
+    Connection[]    prefferedConnections;
+    Connection      optimisticallyUnchoked;
+
+    public void run() {
+        System.out.println("Peer " + ID +  " started");
+    }
 
     // decode message - returns message type with payload
     public void handleMessage(String msg) {
@@ -78,29 +84,34 @@ public class Peer {
 
     public void handleHave(int len) { /* TODO */}
 
-    public boolean handleBitfield(String bitfield) {
-        if (bitfield.length() == 0) {
-            // Peer does not yet have anything
+    public void handleBitfield(String peerBitfield) {
+        if (peerBitfield.length() == 0) {
+            // Set connections bitfield to empty all zero
+            return;
         }
         else {
+            int[] receivedBitfield = new int[bitFieldSize];
+
+            for (int i = 0; i < peerBitfield.length(); i++) {
+                receivedBitfield[i] = peerBitfield.charAt(i);
+            }
+
             // We need to compare the two bitfields and keep track of which bits we are interested in
             boolean interested = false;
-            for (int i = 0; i < /* Insert Bitfield Length */10; i++) {
-                if (((int)bitfield.charAt(i) + connections[0].peerBitfield[i]) % 2 == 1) {
+            for (int i = 0; i < bitFieldSize; i++) {
+                if ((receivedBitfield[i] + bitfield[i]) % 2 == 1) {
                     interested = true;
                 }
             }
 
             if (interested) {
-                // We need a function to send an interested message to the peer
+                /* SEND INTERESTED MESSAGE BACK */
             }
             else {
-                // Function to send an uninterested message to the peer
+                /* SEND UNINTERESTED MESSAGE BACK */
             }
         }
-
-
-        return true;
+        return;
     }
 
     public void handleRequest(int len) { /* TODO */ }
@@ -153,5 +164,12 @@ public class Peer {
         catch(IOException ioException) {
             ioException.printStackTrace();
         }
+    }
+
+    // Main
+    public static void main (String[] args) {
+        // Create a new peer
+        peerProcess peer = new peerProcess(Integer.valueOf(args[0]));
+        peer.run();
     }
 }

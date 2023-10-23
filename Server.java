@@ -1,14 +1,11 @@
-package src.main.java;
-// Code provided to us from the CNT4007 canvas page files/Project/Sample Server.java
-
 import java.net.*;
 import java.io.*;
 
-public class Server extends Peer {
+public class Server {
     private static final int sPort = 8000; //The server will be listening on this port number
-    private static Peer peer = null;
+    private static peerProcess peer = null;
 
-    public Server(Peer p) {
+    public Server(peerProcess p) {
         peer = p;
     }
 
@@ -38,13 +35,13 @@ public class Server extends Peer {
         private ObjectInputStream in; //stream read from the socket
         private ObjectOutputStream out; //stream write to the socket
         private int no; //The index number of the client
-        private Peer peer; // Parent peer
+        private peerProcess peer; // Parent peer
 
         // state
         // their bitfield
         // etc
 
-        public Handler(Socket connection, int no, Peer peer) {
+        public Handler(Socket connection, int no, peerProcess peer) {
             this.connection = connection;
             this.no = no;
             this.peer = peer;
@@ -61,7 +58,7 @@ public class Server extends Peer {
 
                     while(true) {
                         message = (String)in.readObject();
-                        //handleMessage(message);
+                        peer.handleMessage(message);
 
                         System.out.println("Receive message: " + message + " from client " + no);
                         //Capitalize all letters in the message
@@ -102,7 +99,7 @@ public class Server extends Peer {
                 //   Continue to sending messages
 
                 //Send handshake response back to client
-                //sendHandshakeMessage();
+                peer.sendHandshakeMessage();
                 System.out.println("Sent handshake");
             } catch (IOException ioException) {
                 ioException.printStackTrace();
