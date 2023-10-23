@@ -1,4 +1,5 @@
 import java.net.*;
+import java.util.Scanner;
 import java.io.*;
 
 public class peerProcess {
@@ -28,8 +29,31 @@ public class peerProcess {
     Connection[]    prefferedConnections;
     Connection      optimisticallyUnchoked;
 
+    // Common variables
+    int numPrefferedConnections;
+    int unchokeInterval;
+    int optimisticUnchokeInterval;
+    String filename;
+    long fileSize;
+    long pieceSize;
+
     public void run() {
         System.out.println("Peer " + ID +  " started");
+        
+        try {
+            /* START SERVER */
+            server.run();
+            // Server listens
+
+            /* START CLIENT */
+            client.run();
+            // Check the already running peerProcesses that we need to store somewhere somehow
+            // Send a handshake to them and send the bitmap
+        }
+        catch (Exception e) {
+            System.out.println("Something went wrong");
+        }
+        
     }
 
     // decode message - returns message type with payload
@@ -152,7 +176,15 @@ public class peerProcess {
     }
 
     // Handshake response verification
-    public boolean verifyHandshakeResponse(String msg, int expectedID) { /* TODO */ return true;}
+    public boolean verifyHandshakeResponse(String msg, boolean server, int expectedID) { 
+        if (server) {
+            
+        }
+        else {
+
+        }
+        return true;
+    }
 
     //send a message to the output stream
     public void sendMessage(String msg) {
@@ -166,10 +198,51 @@ public class peerProcess {
         }
     }
 
+    public void setup() {
+        try {
+            File common = new File("Common.cfg");
+            Scanner commonReader = new Scanner(common);
+
+            // Num preffered neighbors
+            commonReader.next();
+            this.numPrefferedConnections = Integer.parseInt(commonReader.next());
+
+            // Unchoking interval
+            commonReader.next();
+            this.unchokeInterval = Integer.parseInt(commonReader.next());
+
+            // Optimistic unchoking interval
+            commonReader.next();
+            this.optimisticUnchokeInterval = Integer.parseInt(commonReader.next());
+
+            // filename
+            commonReader.next();
+            this.filename = commonReader.next();
+
+            // Filesize
+            commonReader.next();
+            this.fileSize = Long.parseLong(commonReader.next());
+
+            // Piecesize
+            commonReader.next();
+            this.pieceSize = Long.parseLong(commonReader.next());
+
+            commonReader.close();
+        }
+        catch (FileNotFoundException e) {
+            System.out.println("Could not find file");
+        }
+    }
+
     // Main
     public static void main (String[] args) {
         // Create a new peer
         peerProcess peer = new peerProcess(Integer.valueOf(args[0]));
+
+        // Read the config files
+        peer.setup();
+
+        // Start the peer
         peer.run();
     }
 }

@@ -79,7 +79,7 @@ public class Client {
             System.out.println("Received handshake Response: " + handshakeResponse);
 
             //   Verify Handshake Response
-            peer.verifyHandshakeResponse(handshakeResponse, 0/* [INSERT EXPECTED PEER ID] */);
+            peer.verifyHandshakeResponse(handshakeResponse, false, 50/* [INSERT EXPECTED PEER ID] */);
 
         }catch(IOException ioException){
             ioException.printStackTrace();
@@ -88,10 +88,4 @@ public class Client {
             System.err.println("Class not found");
         }
     }
-
-    //main method
-    // public static void main(String args[]) {
-    //     Client client = new Client();
-    //     client.run();
-    // }
 }

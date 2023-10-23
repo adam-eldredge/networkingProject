@@ -3,21 +3,35 @@ import java.io.*;
 
 public class Server {
     private static final int sPort = 8000; //The server will be listening on this port number
-    private static peerProcess peer = null;
+    
+    int numClients = 0;
+    peerProcess peer = null;
+    Handler[] clients = new Handler[numClients];
+    
 
-    public Server(peerProcess p) {
-        peer = p;
+    public Server(peerProcess peer) {
+        this.peer = peer;
     }
 
-    public static void main(String[] args) throws Exception {
+    public void run() throws Exception {
         System.out.println("The server is running.");
         ServerSocket listener = new ServerSocket(sPort);
-        int clientNum = 1;
         try {
             while(true) {
-                new Handler(listener.accept(),clientNum, peer).start();
-                System.out.println("Client " + clientNum + " is connected!");
-                clientNum++;
+                int newNumClients = numClients + 1;
+                Handler[] newClients = new Handler[newNumClients];
+                
+                for (int i = 0; i < numClients; i++) {
+                    newClients[i] = clients[i];
+                }
+
+                newClients[numClients] = new Handler(listener.accept(), numClients, peer);
+                newClients[numClients].start();
+
+                System.out.println("Client " + (numClients) + " is connected!");
+
+                this.numClients = newNumClients;
+                this.clients = newClients;
             }
         } finally {
             listener.close();
@@ -35,11 +49,8 @@ public class Server {
         private ObjectInputStream in; //stream read from the socket
         private ObjectOutputStream out; //stream write to the socket
         private int no; //The index number of the client
-        private peerProcess peer; // Parent peer
-
-        // state
-        // their bitfield
-        // etc
+        private int clientPeerID;
+        private peerProcess peer; // Parent peer of the server
 
         public Handler(Socket connection, int no, peerProcess peer) {
             this.connection = connection;
@@ -90,21 +101,27 @@ public class Server {
 
         public void handshake(ObjectInputStream in) {
             try {
-                //Wait for handshake request from client
+                /* RECEIVE HANDSHAKE */
                 String clientmessage = (String)in.readObject();
                 System.out.println("Handshake: " + clientmessage + " from client " + no);
 
-                //   Verify Correct Handshake
-                //------(Insert Code here)------
-                //   Continue to sending messages
+                /* VERIFY HANDSHAKE */
+                boolean verified = peer.verifyHandshakeResponse(clientmessage, true, 0 /* Expected client number */);
 
-                //Send handshake response back to client
-                peer.sendHandshakeMessage();
-                System.out.println("Sent handshake");
+                if (verified) {
+                    peer.sendHandshakeMessage();
+                    System.out.println("Sent handshake");
+                }
+                else {
+                    throw new RuntimeException();
+                }
+
             } catch (IOException ioException) {
                 ioException.printStackTrace();
             } catch (ClassNotFoundException e) {
                 System.err.println("Class not found");
+            } catch (RuntimeException runtimeException) {
+                System.err.println("Handshake was not verified");
             }
         }
 
