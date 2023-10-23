@@ -24,7 +24,7 @@ public class Client {
     void run() {
         try {
             //create a socket to connect to the server
-            requestSocket = new Socket("localhost", 8000);
+            requestSocket = new Socket("localhost", portNum);
 
             //initialize inputStream and outputStream
             out = new ObjectOutputStream(requestSocket.getOutputStream());

@@ -2,20 +2,21 @@ import java.net.*;
 import java.io.*;
 
 public class Server {
-    private static final int sPort = 8000; //The server will be listening on this port number
     
     int numClients = 0;
     peerProcess peer = null;
+    int portNum;
     Handler[] clients = new Handler[numClients];
     
 
-    public Server(peerProcess peer) {
+    public Server(peerProcess peer, int portNum) {
         this.peer = peer;
+        this.portNum = portNum;
     }
 
     public void run() throws Exception {
-        System.out.println("The server is running.");
-        ServerSocket listener = new ServerSocket(sPort);
+        System.out.println("The server is running on port: " + portNum);
+        ServerSocket listener = new ServerSocket(portNum);
         try {
             while(true) {
                 int newNumClients = numClients + 1;

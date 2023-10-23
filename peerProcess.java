@@ -24,7 +24,6 @@ public class peerProcess {
 
     public peerProcess(int id) {
         this.ID = id;
-        this.server = new Server(this);
     }
 
     // Peer variables
@@ -35,6 +34,7 @@ public class peerProcess {
     Vector<Connection>   connections     = new Vector<>();
     Vector<Connection>   prefferedConnections;
     Connection              optimisticallyUnchoked;
+    int portNum;
 
     // Common variables
     int numPrefferedConnections;
@@ -189,7 +189,11 @@ public class peerProcess {
 
                 // Check the host ID
                 int pID = Integer.parseInt(components[0]);
-                if (this.ID == pID) break;
+                if (this.ID == pID) {
+                    this.portNum = Integer.parseInt(components[2]);
+                    this.server = new Server(this, portNum);
+                    break;
+                }
                 else {
                     // Connect our peer to the other peer
                     Connection priorPeer = new Connection();
