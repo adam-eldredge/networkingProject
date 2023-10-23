@@ -31,7 +31,7 @@ public class Peer {
         try {
             
             int length = Integer.parseInt(msg.substring(0,4));
-            int type = Integer.parseInt(msg.substring(5,6));
+            int type = Integer.parseInt(msg.substring(4,5));
 
             if (type == 0) {
                 handleChoke();
@@ -68,7 +68,9 @@ public class Peer {
     }
 
     // *** MESSAGE HANDLING *** //
-    public void handleChoke() { /* TODO */ }
+    public void handleChoke() {
+
+    }
 
     public void handleUnchoke() { /* TODO */ }
 
@@ -106,6 +108,33 @@ public class Peer {
     public void handleRequest(int len) { /* TODO */ }
 
     public void handlePiece(int len) { /* TODO */ }
+
+    // *** MESSAGE SENDING *** //
+    public void sendChoke()
+    {
+        String msg = "00010";
+        sendMessage(msg);
+    }
+    public void sendUnchoke()
+    {
+        String msg = "00011";
+        sendMessage(msg);
+    }
+    public void sendInterested()
+    {
+        String msg = "00012";
+        sendMessage(msg);
+    }
+    public void sendNotInterested()
+    {
+        String msg = "00013";
+        sendMessage(msg);
+    }
+    public void sendHave()
+    {
+
+    }
+
 
     byte[] intToByteArray(int value) {
         byte[] intBytes = new byte[4];
