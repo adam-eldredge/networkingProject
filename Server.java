@@ -4,12 +4,12 @@ import java.io.*;
 public class Server {
     
     int numClients = 0;
-    PeerProcess peer = null;
+    peerProcess peer = null;
     int portNum;
     Handler[] clients = new Handler[numClients];
     
 
-    public Server(PeerProcess peer, int portNum) {
+    public Server(peerProcess peer, int portNum) {
         this.peer = peer;
         this.portNum = portNum;
     }
@@ -51,9 +51,9 @@ public class Server {
         private ObjectOutputStream out; //stream write to the socket
         private int no; //The index number of the client
         private int clientPeerID;
-        private PeerProcess peer; // Parent peer of the server
+        private peerProcess peer; // Parent peer of the server
 
-        public Handler(Socket connection, int no, PeerProcess peer) {
+        public Handler(Socket connection, int no, peerProcess peer) {
             this.connection = connection;
             this.no = no;
             this.peer = peer;
@@ -70,7 +70,7 @@ public class Server {
                     handshake(message);
                     while(true) {
                         message = (String) in.readObject();
-                        peer.handleMessage(message);
+                        peer.receiveMessage(message, out);
                     }
                 }
                 catch(/*ClassNotFoundException */ Exception classnot){

@@ -5,7 +5,7 @@ import java.util.Scanner;
 import java.io.*;
 import java.math.BigInteger;
 
-public class PeerProcess {
+public class peerProcess {
     
     class Connection {
         public int peerID;
@@ -23,28 +23,40 @@ public class PeerProcess {
         public Client peerClient = null;
     }
 
-    public PeerProcess(int id)
+    public peerProcess(int id)
     {
         this.ID = id;
     }
 
     // Peer variables
-    int                     ID              = 0;
-    int                     bitFieldSize;
-    int[]                   bitfield = new int[16];
-    Server                  server          = null;
-    Vector<Connection>   connections     = new Vector<>();
-    Vector<Connection>   prefferedConnections;
-    Connection              optimisticallyUnchoked;
-    int portNum;
+    int                 ID                  = 0;
+    int                 bitFieldSize;
+    int                 portNum;
+    int[]               bitfield            = new int[16];
+    Server              server              = null;
+    Connection          optUnchoked;
+    messageHandler      messenger           = new messageHandler(this, bitFieldSize);
+    Vector<Connection>  connections         = new Vector<>();
+    Vector<Connection>  prefConnections;
 
     // Common variables
-    int numPrefferedConnections;
-    int unchokeInterval;
-    int optimisticUnchokeInterval;
-    String filename;
-    long fileSize;
-    long pieceSize;
+    int     numPrefferedConnections;
+    int     unchokeInterval;
+    int     optimisticUnchokeInterval;
+    String  filename;
+    long    fileSize;
+    long    pieceSize;
+
+    // Main
+    public static void main (String[] args) {
+        // Create a new peer
+        peerProcess peer = new peerProcess(Integer.valueOf(args[0]));
+        // Read the config files
+        peer.setup();
+
+        // Start the peer
+        peer.run();
+    }
 
     public void run() {
         System.out.println("Peer " + ID +  " started");
@@ -58,119 +70,6 @@ public class PeerProcess {
         }
         
     }
-
-    // decode message - returns message type with payload
-    public void handleMessage(String msg) {
-        try {
-            int length = Integer.parseInt(msg.substring(0,4));
-            int type = Integer.parseInt(msg.substring(4,5));
-
-            if (type == 0) {
-                handleChoke();
-            }
-            else if (type == 1) {
-                handleUnchoke();
-            }
-            else if (type == 2) {
-                handleInterested();
-            }
-            else if (type == 3) {
-                handleUninterested();
-            }
-            else if (type == 4) {
-                handleHave(length);
-            }
-            else if (type == 5) {
-                handleBitfield(msg.substring(6, 6 + length));
-            }
-            else if (type == 6) {
-                handleRequest(length);
-            }
-            else if (type == 7) {
-                handlePiece(length);
-            }
-            else {
-                // Something is wrong
-                return;
-            }
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    // *** MESSAGE HANDLING *** //
-    public void handleChoke() { System.out.println("Handled the choke"); }
-
-    public void handleUnchoke() { /* TODO */ }
-
-    public void handleInterested() { /* TODO */ }
-
-    public void handleUninterested() { /* TODO */ }
-
-    public void handleHave(int len) { /* TODO */}
-
-    public void handleBitfield(String peerBitfield) {
-        if (peerBitfield.length() == 0) {
-            // Set connections bitfield to empty all zero
-            return;
-        }
-        else {
-            int[] receivedBitfield = new int[bitFieldSize];
-
-            for (int i = 0; i < peerBitfield.length(); i++) {
-                receivedBitfield[i] = peerBitfield.charAt(i);
-            }
-
-            // We need to compare the two bitfields and keep track of which bits we are interested in
-            boolean interested = false;
-            for (int i = 0; i < bitFieldSize; i++) {
-                if ((receivedBitfield[i] + bitfield[i]) % 2 == 1) {
-                    interested = true;
-                }
-            }
-
-            if (interested) {
-                sendInterested();
-            }
-            else {
-                sendUnchoke();
-            }
-        }
-        return;
-    }
-
-    public void handleRequest(int len) { /* TODO */ }
-
-    public void handlePiece(int len) { /* TODO */ }
-
-    // *** MESSAGE SENDING *** //
-    public void sendChoke() {
-        String msg = "00010";
-        //sendMessage(msg);
-    }
-    public void sendUnchoke() {
-        String msg = "00011";
-        //sendMessage(msg);
-    }
-    public void sendInterested() {
-        String msg = "00012";
-        //sendMessage(msg);
-    }
-    public void sendUninterested() {
-        String msg = "00013";
-        //sendMessage(msg);
-    }
-
-    public void sendHave(int len) { /* TODO */}
-
-    public void sendBitfield() {
-        //sendMessage(Arrays.toString(peer.bitfield));
-    }
-
-    public void sendRequest(int len) { /* TODO */ }
-
-    public void sendPiece(int len) { /* TODO */ }
 
     public void setup() {
         try {
@@ -203,7 +102,7 @@ public class PeerProcess {
 
             commonReader.close();
         }
-        catch (FileNotFoundException e) {
+        catch (FileNotFoundException e) { 
             System.out.println("Could not find file");
         }
 
@@ -253,14 +152,14 @@ public class PeerProcess {
         }
     }
 
-    // Main
-    public static void main (String[] args) {
-        // Create a new peer
-        PeerProcess peer = new PeerProcess(Integer.valueOf(args[0]));
-        // Read the config files
-        peer.setup();
+    public boolean receiveMessage(String msg, ObjectOutputStream out) {
+     
+        messenger.decodeMessage(msg, out);
+        return true;
+    }
 
-        // Start the peer
-        peer.run();
+    public boolean sendMessage(int type, String msg, ObjectOutputStream out) {
+        messenger.sendMessage(type, msg, out);
+        return true;
     }
 }
