@@ -1,6 +1,7 @@
 import java.net.*;
 import java.sql.Connection;
 import java.io.*;
+import java.util.Arrays;
 
 public class Client {
 
@@ -12,9 +13,9 @@ public class Client {
     String hostName;
     int portNum;
     int connectionID; 
-    peerProcess peer; // Parent peer of this client
+    PeerProcess peer; // Parent peer of this client
 
-    public Client(peerProcess p, String hostName, int portNum, int connectionID) {
+    public Client(PeerProcess p, String hostName, int portNum, int connectionID) {
         peer = p;
         this.hostName = hostName;
         this.portNum = portNum;
@@ -32,33 +33,21 @@ public class Client {
             in = new ObjectInputStream(requestSocket.getInputStream());
 
             handshake(in);
-
             System.out.println("Connected to " + hostName + " in port " + portNum);
-
-            
-
-            //get Input from standard input
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
-
-            // while(true) {
-            //     System.out.print("Hello, please input a sentence: ");
-            //     //read a sentence from the standard input
-            //     message = bufferedReader.readLine();
-            //     //Send the sentence to the server
-            //     peer.sendMessage(message);
-
-            //     //Receive the upperCase sentence from the server
-            //     MESSAGE = (String)in.readObject();
-            //     //show the message to the user
-            //     System.out.println("Receive message: " + MESSAGE);
-            // }
+            try {
+                while(true) {
+                    System.out.println("Waiting for server Response");
+                    message = (String) in.readObject();
+                    peer.handleMessage(message);
+                }
+            }
+        catch(/*ClassNotFoundException */ Exception classnot){
+            System.err.println("Data received in unknown format");
+        }
         }
         catch (ConnectException e) {
             System.err.println("Connection refused. You need to initiate a server first.");
         }
-        // catch ( ClassNotFoundException e ) {
-        //     System.err.println("Class not found");
-        // }
         catch(UnknownHostException unknownHost){
             System.err.println("You are trying to connect to an unknown host!");
         }

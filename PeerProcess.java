@@ -1,10 +1,11 @@
 import java.net.*;
+import java.util.Arrays;
 import java.util.Vector;
 import java.util.Scanner;
 import java.io.*;
 import java.math.BigInteger;
 
-public class peerProcess {
+public class PeerProcess {
     
     class Connection {
         public int peerID;
@@ -22,14 +23,15 @@ public class peerProcess {
         public Client peerClient = null;
     }
 
-    public peerProcess(int id) {
+    public PeerProcess(int id)
+    {
         this.ID = id;
     }
 
     // Peer variables
     int                     ID              = 0;
     int                     bitFieldSize;
-    int[]                   bitfield;
+    int[]                   bitfield = new int[16];
     Server                  server          = null;
     Vector<Connection>   connections     = new Vector<>();
     Vector<Connection>   prefferedConnections;
@@ -60,9 +62,8 @@ public class peerProcess {
     // decode message - returns message type with payload
     public void handleMessage(String msg) {
         try {
-            
             int length = Integer.parseInt(msg.substring(0,4));
-            int type = Integer.parseInt(msg.substring(5,6));
+            int type = Integer.parseInt(msg.substring(4,5));
 
             if (type == 0) {
                 handleChoke();
@@ -99,7 +100,7 @@ public class peerProcess {
     }
 
     // *** MESSAGE HANDLING *** //
-    public void handleChoke() { /* TODO */ }
+    public void handleChoke() { System.out.println("Handled the choke"); }
 
     public void handleUnchoke() { /* TODO */ }
 
@@ -130,10 +131,10 @@ public class peerProcess {
             }
 
             if (interested) {
-                /* SEND INTERESTED MESSAGE BACK */
+                sendInterested();
             }
             else {
-                /* SEND UNINTERESTED MESSAGE BACK */
+                sendUnchoke();
             }
         }
         return;
@@ -142,6 +143,34 @@ public class peerProcess {
     public void handleRequest(int len) { /* TODO */ }
 
     public void handlePiece(int len) { /* TODO */ }
+
+    // *** MESSAGE SENDING *** //
+    public void sendChoke() {
+        String msg = "00010";
+        //sendMessage(msg);
+    }
+    public void sendUnchoke() {
+        String msg = "00011";
+        //sendMessage(msg);
+    }
+    public void sendInterested() {
+        String msg = "00012";
+        //sendMessage(msg);
+    }
+    public void sendUninterested() {
+        String msg = "00013";
+        //sendMessage(msg);
+    }
+
+    public void sendHave(int len) { /* TODO */}
+
+    public void sendBitfield() {
+        //sendMessage(Arrays.toString(peer.bitfield));
+    }
+
+    public void sendRequest(int len) { /* TODO */ }
+
+    public void sendPiece(int len) { /* TODO */ }
 
     public void setup() {
         try {
@@ -227,8 +256,7 @@ public class peerProcess {
     // Main
     public static void main (String[] args) {
         // Create a new peer
-        peerProcess peer = new peerProcess(Integer.valueOf(args[0]));
-
+        PeerProcess peer = new PeerProcess(Integer.valueOf(args[0]));
         // Read the config files
         peer.setup();
 

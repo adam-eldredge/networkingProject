@@ -4,12 +4,12 @@ import java.io.*;
 public class Server {
     
     int numClients = 0;
-    peerProcess peer = null;
+    PeerProcess peer = null;
     int portNum;
     Handler[] clients = new Handler[numClients];
     
 
-    public Server(peerProcess peer, int portNum) {
+    public Server(PeerProcess peer, int portNum) {
         this.peer = peer;
         this.portNum = portNum;
     }
@@ -51,9 +51,9 @@ public class Server {
         private ObjectOutputStream out; //stream write to the socket
         private int no; //The index number of the client
         private int clientPeerID;
-        private peerProcess peer; // Parent peer of the server
+        private PeerProcess peer; // Parent peer of the server
 
-        public Handler(Socket connection, int no, peerProcess peer) {
+        public Handler(Socket connection, int no, PeerProcess peer) {
             this.connection = connection;
             this.no = no;
             this.peer = peer;
@@ -66,17 +66,11 @@ public class Server {
                 out.flush();
                 in = new ObjectInputStream(connection.getInputStream());
                 try{
-                    handshake(in);
-
+                    message = (String) in.readObject();
+                    handshake(message);
                     while(true) {
-                        // message = (String)in.readObject();
-                        // peer.handleMessage(message);
-
-                        // System.out.println("Receive message: " + message + " from client " + no);
-                        // //Capitalize all letters in the message
-                        // MESSAGE = message.toUpperCase();
-                        // //send MESSAGE back to the client
-                        // sendMessage(MESSAGE);
+                        message = (String) in.readObject();
+                        peer.handleMessage(message);
                     }
                 }
                 catch(/*ClassNotFoundException */ Exception classnot){
@@ -100,10 +94,9 @@ public class Server {
         }
 
 
-        public void handshake(ObjectInputStream in) {
+        public void handshake(String clientmessage) {
             try {
                 /* RECEIVE HANDSHAKE */
-                String clientmessage = (String)in.readObject();
                 System.out.println("Handshake: " + clientmessage + " from client " + no);
 
                 /* VERIFY HANDSHAKE */
@@ -117,11 +110,6 @@ public class Server {
                 else {
                     throw new RuntimeException();
                 }
-
-            } catch (IOException ioException) {
-                ioException.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                System.err.println("Class not found");
             } catch (RuntimeException runtimeException) {
                 System.err.println("Handshake was not verified");
             }
