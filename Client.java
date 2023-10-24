@@ -13,9 +13,9 @@ public class Client {
     String hostName;
     int portNum;
     int connectionID; 
-    PeerProcess peer; // Parent peer of this client
+    peerProcess peer; // Parent peer of this client
 
-    public Client(PeerProcess p, String hostName, int portNum, int connectionID) {
+    public Client(peerProcess p, String hostName, int portNum, int connectionID) {
         peer = p;
         this.hostName = hostName;
         this.portNum = portNum;
@@ -38,7 +38,7 @@ public class Client {
                 while(true) {
                     System.out.println("Waiting for server Response");
                     message = (String) in.readObject();
-                    peer.handleMessage(message);
+                    peer.receiveMessage(message, out);
                 }
             }
         catch(/*ClassNotFoundException */ Exception classnot){
