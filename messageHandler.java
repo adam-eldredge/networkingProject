@@ -11,28 +11,29 @@ public class messageHandler {
     }
 
     // decode message - returns message type with payload
-    public void decodeMessage(String msg, ObjectOutputStream out) {
+    // peerID is who the message came from
+    public void decodeMessage(String msg, ObjectOutputStream out, int peerID) {
         try {
             int length = Integer.parseInt(msg.substring(0,4));
             int type = Integer.parseInt(msg.substring(4,5));
 
             if (type == 0) {
-                handleChoke();
+                handleChoke(peerID);
             }
             else if (type == 1) {
-                handleUnchoke();
+                handleUnchoke(peerID);
             }
             else if (type == 2) {
-                handleInterested();
+                handleInterested(peerID);
             }
             else if (type == 3) {
-                handleUninterested();
+                handleUninterested(peerID);
             }
             else if (type == 4) {
                 handleHave(length);
             }
             else if (type == 5) {
-                handleBitfield(msg.substring(6, 6 + length));
+                handleBitfield(msg.substring(6, 6 + length), peerID);
             }
             else if (type == 6) {
                 handleRequest(length);
@@ -51,27 +52,35 @@ public class messageHandler {
     }
 
     // *** MESSAGE HANDLING *** //
-    public void handleChoke() { System.out.println("Handled the choke"); }
-
-    public void handleUnchoke() {
-        // This function will handle an unchoke message received
+    public void handleChoke(int peerID) { 
+        Connection neighbor = peer.getPeer(peerID);
+        neighbor.setUsChoked(true); 
     }
 
-    public void handleInterested() {
-        // This function will handle an interested message received
+    public void handleUnchoke(int peerID) {
+        Connection neighbor = peer.getPeer(peerID);
+        neighbor.setUsChoked(false);
     }
 
-    public void handleUninterested() {
-        // This function will handle an uninterested message received
+    public void handleInterested(int peerID) {
+        Connection neighbor = peer.getPeer(peerID);
+        neighbor.setUsInterested(true);
+    }
+
+    public void handleUninterested(int peerID) {
+        Connection neighbor = peer.getPeer(peerID);
+        neighbor.setUsInterested(false);
     }
 
     public void handleHave(int len) {
         // This function will handle a have message received
     }
 
-    public void handleBitfield(String peerBitfield) {
+    public void handleBitfield(String peerBitfield, int peerID) {
         if (peerBitfield.length() == 0) {
             // Set connections bitfield to empty all zero
+            Connection neighbor = peer.getPeer(peerID);
+            neighbor.clearBitfield();
             return;
         }
         else {
@@ -84,7 +93,9 @@ public class messageHandler {
             // We need to compare the two bitfields and keep track of which bits we are interested in
             boolean interested = false;
             for (int i = 0; i < bitFieldSize; i++) {
-                if ((receivedBitfield[i] + peer.bitfield[i]) % 2 == 1) {
+                if ((receivedBitfield[i] - peer.bitfield[i]) == 1) {
+                    // Checking to see if they have a 1 and we have a 0
+                    // Meaning they have a piece that we dont have so we are interested
                     interested = true;
                 }
             }
@@ -109,7 +120,8 @@ public class messageHandler {
 
 
 
-    public void sendMessage(int type, String payload, ObjectOutputStream out) {
+    public void sendMessage(int type, String payload, ObjectOutputStream out, int peerID) {
+        // PeerID is who the message needs to go to
         switch(type) {
             case 0:
                 sendChoke();
