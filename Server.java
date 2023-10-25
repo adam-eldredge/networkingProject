@@ -70,7 +70,7 @@ public class Server {
                     handshake(message);
                     while(true) {
                         message = (String) in.readObject();
-                        peer.receiveMessage(message, out);
+                        peer.receiveMessage(message, out, clientPeerID);
                     }
                 }
                 catch(/*ClassNotFoundException */ Exception classnot){
