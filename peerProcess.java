@@ -6,27 +6,6 @@ import java.io.*;
 import java.math.BigInteger;
 
 public class peerProcess {
-    
-    class Connection {
-        public int peerID;
-        public String hostName;
-        public int portNum;
-        public boolean hasFile;
-
-        // Bitfield information
-        public int[] peerBitfield;
-        
-        // State variables
-        public boolean choked = false; // Are they set to choked from us to them (not them to us)
-        public boolean interested = false;
-
-        public Client peerClient = null;
-    }
-
-    public peerProcess(int id)
-    {
-        this.ID = id;
-    }
 
     // Peer variables
     int                 ID                  = 0;
@@ -46,6 +25,11 @@ public class peerProcess {
     String  filename;
     long    fileSize;
     long    pieceSize;
+
+    public peerProcess(int id)
+    {
+        this.ID = id;
+    }
 
     // Main
     public static void main (String[] args) {
@@ -123,14 +107,13 @@ public class peerProcess {
                     break;
                 }
                 else {
-                    // Connect our peer to the other peer
-                    Connection priorPeer = new Connection();
-
                     // Set the peer variables
-                    priorPeer.peerID = pID;
-                    priorPeer.hostName = components[1];
-                    priorPeer.portNum = Integer.parseInt(components[2]);
-                    priorPeer.hasFile = (Integer.parseInt(components[3]) != 0);
+                    String hostName = components[1];
+                    int portNum = Integer.parseInt(components[2]);
+                    boolean hasFile = (Integer.parseInt(components[3]) != 0);
+
+                    // Connect our peer to the other peer
+                    Connection priorPeer = new Connection(pID, hostName, portNum, hasFile);
 
                     // Add connection to this peers list of connections
                     this.connections.add(priorPeer);
@@ -152,14 +135,23 @@ public class peerProcess {
         }
     }
 
-    public boolean receiveMessage(String msg, ObjectOutputStream out) {
-     
-        messenger.decodeMessage(msg, out);
+    public Connection getPeer(int peerID) {
+        for (int i = 0; i < connections.size(); i++) {
+            if (connections.get(i).peerID == peerID) {
+                return connections.get(i);
+            }
+        }
+
+        return null;
+    }
+
+    public boolean receiveMessage(String msg, ObjectOutputStream out, int connectionID) {
+        messenger.decodeMessage(msg, out, connectionID);
         return true;
     }
 
-    public boolean sendMessage(int type, String msg, ObjectOutputStream out) {
-        messenger.sendMessage(type, msg, out);
+    public boolean sendMessage(int type, String msg, ObjectOutputStream out, int connectionID) {
+        messenger.sendMessage(type, msg, out, connectionID);
         return true;
     }
 }
