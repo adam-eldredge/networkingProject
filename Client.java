@@ -38,7 +38,7 @@ public class Client {
                 while(true) {
                     System.out.println("Waiting for server Response");
                     message = (String) in.readObject();
-                    peer.receiveMessage(message, out);
+                    peer.receiveMessage(message, out, connectionID);
                 }
             }
         catch(/*ClassNotFoundException */ Exception classnot){
