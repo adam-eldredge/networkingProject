@@ -32,10 +32,21 @@ public class Client {
             out.flush();
             in = new ObjectInputStream(requestSocket.getInputStream());
 
+            
             handshake(in);
+            
+            peer.getLogger().generateTCPLogReceiver(Integer.toString(connectionID));
+            
             System.out.println("Connected to " + hostName + " in port " + portNum);
             try {
                 while(true) {
+                    // Logic needs to be added here
+
+                    // !connection stablish 
+                    // send handshake
+                    // has file send bitfield
+                    // connection stablished
+                    
                     System.out.println("Waiting for server Response");
                     message = (String) in.readObject();
                     peer.receiveMessage(message, out, connectionID);

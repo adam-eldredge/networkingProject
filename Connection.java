@@ -1,5 +1,5 @@
 public class Connection {
-    public int peerID;
+    public int peerID; // ID of connected peer
     public String hostName;
     public int portNum;
     public boolean hasFile;
@@ -12,7 +12,7 @@ public class Connection {
     public boolean usChoked = false; // Are we choked by them (not them to us)
     public boolean themInterested = false;
     public boolean usInterested = false;
-    public Client peerClient = null;
+    public Client peerClient;
 
     public Connection(int peerID, String hostName, int portNum, boolean hasFile) {
         this.peerID = peerID;

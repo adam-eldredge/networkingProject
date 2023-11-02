@@ -29,6 +29,9 @@ public class Server {
                 newClients[numClients] = new Handler(listener.accept(), numClients, peer);
                 newClients[numClients].start();
 
+                
+                peer.getLogger().generateTCPLogReceiver(Integer.toString(numClients));
+                
                 System.out.println("Client " + (numClients) + " is connected!");
 
                 this.numClients = newNumClients;
@@ -92,7 +95,6 @@ public class Server {
                 }
             }
         }
-
 
         public void handshake(String clientmessage) {
             try {

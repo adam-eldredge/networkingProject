@@ -30,16 +30,18 @@ public class messageHandler {
                 handleUninterested(peerID);
             }
             else if (type == 4) {
-                handleHave(length);
+                handleHave(peerID, length);
             }
             else if (type == 5) {
                 handleBitfield(msg.substring(6, 6 + length), peerID);
             }
             else if (type == 6) {
-                handleRequest(length);
+                handleRequest(peerID, length);
             }
             else if (type == 7) {
-                handlePiece(length);
+                // add data amount to calculate download rate
+
+                handlePiece(peerID, length);
             }
             else {
                 // Something is wrong
@@ -55,25 +57,30 @@ public class messageHandler {
     public void handleChoke(int peerID) { 
         Connection neighbor = peer.getPeer(peerID);
         neighbor.setUsChoked(true); 
+        peer.getLogger().chokedNeighbor(Integer.toString(peerID));
     }
 
     public void handleUnchoke(int peerID) {
         Connection neighbor = peer.getPeer(peerID);
         neighbor.setUsChoked(false);
+        peer.getLogger().unchokedNeighbor(Integer.toString(peerID));
     }
 
     public void handleInterested(int peerID) {
         Connection neighbor = peer.getPeer(peerID);
         neighbor.setUsInterested(true);
+        peer.getLogger().receiveInterested(Integer.toString(peerID));
     }
 
     public void handleUninterested(int peerID) {
         Connection neighbor = peer.getPeer(peerID);
         neighbor.setUsInterested(false);
+        peer.getLogger().receiveNotInterested(Integer.toString(peerID));
     }
 
-    public void handleHave(int len) {
+    public void handleHave(int peerID, int len) {
         // This function will handle a have message received
+        peer.getLogger().receiveHave(Integer.toString(peerID), len);
     }
 
     public void handleBitfield(String peerBitfield, int peerID) {
@@ -110,12 +117,21 @@ public class messageHandler {
         return;
     }
 
-    public void handleRequest(int len) {
+    public void handleRequest(int peerID, int len) {
         // This function will handle a request message received
+
     }
 
-    public void handlePiece(int len) {
+    public void handlePiece(int peerID, int len) {
+        int pieceIndex = 0;
+        int numPieces = 0;
         // This function will handle a piece message received
+        
+        
+        peer.getLogger().downloadPiece(Integer.toString(peerID), pieceIndex, numPieces);
+
+        //if and only if we have the complete file/all pieces
+        peer.getLogger().completeDownload();
     }
 
 
