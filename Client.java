@@ -14,6 +14,9 @@ public class Client {
     int portNum;
     int connectionID; 
     peerProcess peer; // Parent peer of this client
+    String header = "P2PFILESHARINGPROJ";
+    String zeros = "0000000000";
+
 
     public Client(peerProcess p, String hostName, int portNum, int connectionID) {
         peer = p;
@@ -31,30 +34,30 @@ public class Client {
             out = new ObjectOutputStream(requestSocket.getOutputStream());
             out.flush();
             in = new ObjectInputStream(requestSocket.getInputStream());
-
             
-            handshake(in);
-            
-            peer.getLogger().generateTCPLogReceiver(Integer.toString(connectionID));
-            
-            System.out.println("Connected to " + hostName + " in port " + portNum);
             try {
-                while(true) {
-                    // Logic needs to be added here
+                // handshake();
+                sendHandshakeMessage();
+                this.peer.getLogger().generateTCPLogSender(Integer.toString(this.connectionID));
+                System.out.println("Connected to " + hostName + " in port " + portNum);
 
-                    // !connection stablish 
-                    // send handshake
-                    // has file send bitfield
-                    // connection stablished
-                    
+                //Wait for handshake response from server
+                String handshakeResponse = (String)in.readObject();
+                System.out.println("Received handshake Response: " + handshakeResponse);
+
+                //Verify Handshake Response
+                verifyHandshakeResponse(handshakeResponse);
+                System.out.println("Handshake verified.");
+
+                //if we have some bits send bitfield
+                while(true) {
                     System.out.println("Waiting for server Response");
                     message = (String) in.readObject();
                     peer.receiveMessage(message, out, connectionID);
                 }
+            }catch(Exception classnot){
+                System.err.println("Data received in unknown format");
             }
-        catch(/*ClassNotFoundException */ Exception classnot){
-            System.err.println("Data received in unknown format");
-        }
         }
         catch (ConnectException e) {
             System.err.println("Connection refused. You need to initiate a server first.");
@@ -78,56 +81,22 @@ public class Client {
         }
     }
 
-    void handshake(ObjectInputStream in){
-        //Send initial handshake message when you connect
-        sendHandshakeMessage(peer.ID);
-        System.out.println("Sent handshake");
-
-        try{
-            //Wait for handshake response from server
-            String handshakeResponse = (String)in.readObject();
-            System.out.println("Received handshake Response: " + handshakeResponse);
-
-            //   Verify Handshake Response
-            boolean verified = verifyHandshakeResponse(handshakeResponse, connectionID);
-
-            if (verified) {
-                System.out.println("Handshake verified.");
-            }
-            else {
-                throw new RuntimeException();
-            }
-
-        }catch(IOException ioException){
-            ioException.printStackTrace();
-        }
-        catch (ClassNotFoundException e ) {
-            System.err.println("Class not found");
-        }
-        catch (RuntimeException e) {
-            System.err.println("Handshake from server failed to verify");
-        }
-    }
-
-    public void sendHandshakeMessage(int pID) {
-        String header = "P2PFILESHARINGPROJ";
-        String zeros = "0000000000";
-        String id = String.valueOf(pID);
-
-        //Do we want to send as byte[] or as String??
-        String msgString = header + zeros + id;
-        sendMessage(msgString);
+    private void sendHandshakeMessage() {
+        String id = String.valueOf(peer.ID);
+        String msg = this.header + this.zeros + id;
+        sendMessage(msg);
     }
 
     // Handshake response verification
-    public boolean verifyHandshakeResponse(String msg, int expectedID) {
+    private void verifyHandshakeResponse(String msg) {
         String Header = msg.substring(0,18);
         String zero = msg.substring(18,28); 
         int receivedID = Integer.parseInt(msg.substring(28,32));
 
-        if (!Header.equals("P2PFILESHARINGPROJ") || !zero.equals("0000000000") || expectedID != receivedID) { return false; }
+        if (!Header.equals(this.header) || !zero.equals(this.zeros) || this.connectionID != receivedID) { 
+            throw new RuntimeException(); 
+        }
 
-        return true;
     }
 
     //send a message to the output stream

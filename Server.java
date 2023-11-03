@@ -3,42 +3,36 @@ import java.io.*;
 
 public class Server {
     
-    int numClients = 0;
-    peerProcess peer = null;
+    peerProcess hostPeer;
     int portNum;
-    Handler[] clients = new Handler[numClients];
+    ServerSocket serverSocket = null;
     
 
     public Server(peerProcess peer, int portNum) {
-        this.peer = peer;
+        this.hostPeer = peer;
         this.portNum = portNum;
     }
 
     public void run() throws Exception {
         System.out.println("The server is running on port: " + portNum);
-        ServerSocket listener = new ServerSocket(portNum);
         try {
+            serverSocket = new ServerSocket(portNum);
+
             while(true) {
-                int newNumClients = numClients + 1;
-                Handler[] newClients = new Handler[newNumClients];
-                
-                for (int i = 0; i < numClients; i++) {
-                    newClients[i] = clients[i];
-                }
-
-                newClients[numClients] = new Handler(listener.accept(), numClients, peer);
-                newClients[numClients].start();
-
-                
-                peer.getLogger().generateTCPLogReceiver(Integer.toString(numClients));
-                
-                System.out.println("Client " + (numClients) + " is connected!");
-
-                this.numClients = newNumClients;
-                this.clients = newClients;
+                Socket clientSocket = serverSocket.accept();
+                System.out.println("New client connected");
+                new Handler(clientSocket, this.hostPeer).start();
             }
+        }catch (IOException e) {
+            e.printStackTrace();
         } finally {
-            listener.close();
+            if(serverSocket != null){
+                try{
+                    serverSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -46,104 +40,74 @@ public class Server {
     * A handler thread class. Handlers are spawned from the listening
     * loop and are responsible for dealing with a single client's requests.
     */
+
     private static class Handler extends Thread {
-        private String message; //message received from the client
-        private String MESSAGE; //uppercase message send to the client
-        private Socket connection;
+        private Socket clientSocket;
         private ObjectInputStream in; //stream read from the socket
         private ObjectOutputStream out; //stream write to the socket
-        private int no; //The index number of the client
-        private int clientPeerID;
-        private peerProcess peer; // Parent peer of the server
+        private String message; //message received from the client
+        private String MESSAGE; //uppercase message send to the client
+        private String clientPeerID;
+        private peerProcess serverPeerIntance; // Parent peer of the server
 
-        public Handler(Socket connection, int no, peerProcess peer) {
-            this.connection = connection;
-            this.no = no;
-            this.peer = peer;
+        public Handler(Socket clientSocket, peerProcess serverPeer) {
+            this.clientSocket = clientSocket;
+            this.serverPeerIntance = serverPeer;
         }
 
         public void run() {
             try{
                 //initialize Input and Output streams
-                out = new ObjectOutputStream(connection.getOutputStream());
+                out = new ObjectOutputStream(clientSocket.getOutputStream());
                 out.flush();
-                in = new ObjectInputStream(connection.getInputStream());
+                in = new ObjectInputStream(clientSocket.getInputStream());
                 try{
-                    message = (String) in.readObject();
-                    handshake(message);
+                    // receive handshake
+                    this.message = (String)in.readObject();
+                    String header = message.substring(0,18);
+                    String zero = message.substring(18,28); 
+                    this.clientPeerID = message.substring(28, 32);
+
+                    // send handshake
+                    this.MESSAGE = header + zero + this.serverPeerIntance.ID;
+                    sendMessage(this.MESSAGE);
+
+                    // log connection received
+                    serverPeerIntance.getLogger().generateTCPLogReceiver(this.clientPeerID);
+
+                    // receive stream of messages
                     while(true) {
+                        //message handler functionality
                         message = (String) in.readObject();
-                        peer.receiveMessage(message, out, clientPeerID);
+                        this.serverPeerIntance.receiveMessage(message, out, Integer.parseInt(clientPeerID));
                     }
                 }
-                catch(/*ClassNotFoundException */ Exception classnot){
+                catch(Exception classnot){
                     System.err.println("Data received in unknown format");
                 }
             }
             catch(IOException ioException){
-                System.out.println("Disconnect with Client " + no);
+                System.out.println("Disconnect with Client " + this.clientPeerID);
             }
             finally{
                 //Close connections
                 try{
                     in.close();
                     out.close();
-                    connection.close();
+                    clientSocket.close();
                 }
                 catch(IOException ioException){
-                    System.out.println("Disconnect with Client " + no);
+                    System.out.println("Disconnect with Client " + this.clientPeerID);
                 }
             }
-        }
-
-        public void handshake(String clientmessage) {
-            try {
-                /* RECEIVE HANDSHAKE */
-                System.out.println("Handshake: " + clientmessage + " from client " + no);
-
-                /* VERIFY HANDSHAKE */
-                boolean verified = verifyHandshakeResponse(clientmessage);
-
-                if (verified) {
-                    System.out.println("Handshake verified.");
-                    sendHandshakeMessage(peer.ID);
-                    System.out.println("Sent handshake");
-                }
-                else {
-                    throw new RuntimeException();
-                }
-            } catch (RuntimeException runtimeException) {
-                System.err.println("Handshake was not verified");
-            }
-        }
-
-        public void sendHandshakeMessage(int pID) {
-    
-            String header = "P2PFILESHARINGPROJ";
-            String zeros = "0000000000";
-            String id = String.valueOf(pID);
-    
-            //Do we want to send as byte[] or as String??
-            String msgString = header + zeros + id;
-            sendMessage(msgString);
-        }
-    
-        // Handshake response verification
-        public boolean verifyHandshakeResponse(String msg) {
-            String Header = msg.substring(0,18);
-            String zero = msg.substring(18,28); 
-    
-            if (!Header.equals("P2PFILESHARINGPROJ") || !zero.equals("0000000000")) { return false; }
-    
-            return true;
         }
 
         //send a message to the output stream
-        public void sendMessage(String msg) {
+        private void sendMessage(String msg) {
             try{
                 out.writeObject(msg);
                 out.flush();
-                System.out.println("Send message: " + msg + " to Client " + no);
+                System.out.println("Send message: " + msg + " to Client " + this.clientPeerID);
             }
             catch(IOException ioException){
                 ioException.printStackTrace();
