@@ -15,6 +15,7 @@ public class peerProcess {
     Server              server              = null;
     Connection          optUnchoked;
     messageHandler      messenger           = new messageHandler(this, bitFieldSize);
+    ConnectionHandler   connector           = new ConnectionHandler(this);
     Vector<Connection>  connections         = new Vector<>();
     Vector<Connection>  prefConnections;
 
@@ -46,8 +47,7 @@ public class peerProcess {
         System.out.println("Peer " + ID +  " started");
         
         try {
-            /* START SERVER */
-            server.run();
+            connector.listen();
         }
         catch (Exception e) {
             System.out.println("Something went wrong");
@@ -112,11 +112,8 @@ public class peerProcess {
                     int portNum = Integer.parseInt(components[2]);
                     boolean hasFile = (Integer.parseInt(components[3]) != 0);
 
-                    // Connect our peer to the other peer
-                    Connection priorPeer = new Connection(pID, hostName, portNum, hasFile);
-
-                    // Add connection to this peers list of connections
-                    this.connections.add(priorPeer);
+                    // Establish a connection to peer
+                    connector.requestConnection(pID, hostName, portNum, hasFile);
                 }
             }
 
@@ -124,14 +121,6 @@ public class peerProcess {
         }
         catch (FileNotFoundException e) {
             System.out.println("Could not find file");
-        }
-    
-        // Now make connections to all prior peers found
-        for (int i = 0; i < this.connections.size(); i++) {
-            System.out.println("Creating client to connect to peer: " + connections.get(i).peerID);
-            Connection current = connections.get(i);
-            current.peerClient = new Client(this, current.hostName, current.portNum, current.peerID);
-            current.peerClient.run();
         }
     }
 

@@ -22,7 +22,7 @@ public class Client {
         this.connectionID = connectionID;
     }
 
-    void run() {
+    void connect() {
         try {
             //create a socket to connect to the server
             requestSocket = new Socket("localhost", portNum);
@@ -34,16 +34,16 @@ public class Client {
 
             handshake(in);
             System.out.println("Connected to " + hostName + " in port " + portNum);
-            try {
-                while(true) {
-                    System.out.println("Waiting for server Response");
-                    message = (String) in.readObject();
-                    peer.receiveMessage(message, out, connectionID);
-                }
-            }
-        catch(/*ClassNotFoundException */ Exception classnot){
-            System.err.println("Data received in unknown format");
-        }
+        //     try {
+        //         while(true) {
+        //             System.out.println("Waiting for server Response");
+        //             message = (String) in.readObject();
+        //             peer.receiveMessage(message, out, connectionID);
+        //         }
+        //     }
+        // catch(/*ClassNotFoundException */ Exception classnot){
+        //     System.err.println("Data received in unknown format");
+        // }
         }
         catch (ConnectException e) {
             System.err.println("Connection refused. You need to initiate a server first.");
