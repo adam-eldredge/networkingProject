@@ -16,20 +16,22 @@ import java.util.Comparator;
 public class peerProcess {
     
     // Peer variables
-    int                 ID                  = 0;
-    int                 bitFieldSize;
+    int                 ID;
+    int                 bitFieldSize        = 16;
     int                 portNum;
     int[]               bitfield            = new int[16];
     Server              server              = null;
-    Connection          optUnchoked;
+    Neighbor          optUnchoked;
     messageHandler      messenger           = new messageHandler(this, bitFieldSize);
-    Vector<Connection>  connections         = new Vector<>();
-    Vector<Connection>  prefConnections     = new Vector<>();
+    Vector<Neighbor>  neighbors         = new Vector<>();
+    Vector<Neighbor>  prefNeighbor     = new Vector<>();
+    Timer timer = new Timer();
 
     // add all data exchanged to this hashmap: key = peerID, value = data amount
     HashMap<Integer, Integer> connectionsPrevIntervalDataAmount = new HashMap<>();
     PeerLogger          logger;
     Boolean             fileCompleted             = false;
+    Boolean             terminate   = false;
 
 
     // Common variables
@@ -73,15 +75,18 @@ public class peerProcess {
         peer.setup();
 
         // Start the peer
-        peer.run();
+        peer.start();
 
 
     }
 
     public void setup() {
+        Scanner commonReader = null;
+        Scanner peerReader = null;
+
         try {
             File common = new File("Common.cfg");
-            Scanner commonReader = new Scanner(common);
+            commonReader = new Scanner(common);
 
             // Num preffered neighbors
             commonReader.next();
@@ -106,17 +111,19 @@ public class peerProcess {
             // Piecesize
             commonReader.next();
             this.pieceSize = Long.parseLong(commonReader.next());
-
-            commonReader.close();
         }
         catch (FileNotFoundException e) { 
             System.out.println("Could not find file");
+        }finally{
+            if (commonReader != null) {
+                commonReader.close();
+            }
         }
 
         // Now read the PeerInfo file and attempt to make connections to each of the prior peers
         try {
             File peers = new File("PeerInfo.cfg");
-            Scanner peerReader = new Scanner(peers);
+            peerReader = new Scanner(peers);
 
             while (peerReader.hasNextLine()) {
                 String peerLine = peerReader.nextLine();
@@ -133,6 +140,12 @@ public class peerProcess {
                     
                     // start the server
                     this.server = new Server(this, portNum);
+                    try {
+                        server.run();
+                    }
+                    catch (Exception e) {
+                        System.out.println("Something went wrong in the run method");
+                    }
                     break;
                 }
                 else {
@@ -142,56 +155,63 @@ public class peerProcess {
                     boolean hasFile = (Integer.parseInt(components[3]) != 0);
 
                     // Connect our peer to the other peer
-                    Connection priorPeer = new Connection(pID, hostName, portNum, hasFile);
-
+                    Neighbor priorPeer = new Neighbor(this, pID, hostName, portNum, hasFile);
                     // Add connection to this peers list of connections
-                    this.connections.add(priorPeer);
+                    this.neighbors.add(priorPeer);
                 }
             }
 
-            peerReader.close();
         }
         catch (FileNotFoundException e) {
             System.out.println("Could not find file");
+        }finally{
+            if (peerReader != null) {
+                peerReader.close();
+            }
         }
-    
-        // Now make connections to all prior peers found
-        for (int i = 0; i < this.connections.size(); i++) {
-            System.out.println("Creating client to connect to peer: " + connections.get(i).peerID);
-            Connection current = connections.get(i);
-            current.peerClient = new Client(this, current.hostName, current.portNum, current.peerID);
-            current.peerClient.run();
+
+        //send bitfield to all prior peers
+        for (int i = 0; i < this.neighbors.size(); i++) {
+            System.out.println("Creating client to connect to peer: " + neighbors.get(i).neighborID);
+            Neighbor current = neighbors.get(i);
+            current.startClient();
+            messenger.sendMessage(MessageType.BITFIELD, getBitfieldString(), current.getOutputStream(),current.getInputStream(), current.neighborID);
         }
     }
     
-    public void run() {
-        Timer timer = new Timer();
-        // System.out.println("Peer " + ID +  " started");
-        TimerTask updatePreConnectionsTask = new TimerTask() {
-            @Override
-            public void run() {
-                // Update the preferred connections
-                updatePrefConnections();
-            }
-        };
-        TimerTask updateOptUnchokedTask = new TimerTask() {
-            @Override
-            public void run() {
-                // Update the preferred connections
-                updateOptUnchoked();
-            }
-        };
+    public void start() {
         
         try {
+            TimerTask updatePreConnectionsTask = new TimerTask() {
+                @Override
+                public void run() {
+                    // Update the preferred connections
+                    updatePrefConnections();
+                    timer.schedule(this, unchokeInterval);
+                }
+            };
+            TimerTask updateOptUnchokedTask = new TimerTask() {
+                @Override
+                public void run() {
+                    // Update the preferred connections
+                    updateOptUnchoked();
+
+                    timer.schedule(this, optimisticUnchokeInterval);
+                }
+            };
+
             // schedule the tasks
             timer.schedule(updatePreConnectionsTask, unchokeInterval);
             timer.schedule(updateOptUnchokedTask, optimisticUnchokeInterval);
-        
-            /* START SERVER */
-            server.run();
 
-            //cancel the timer
-            // timer.cancel();
+            
+            //set terminate to true when all peers have the complete file
+            while(!terminate){
+                continue;
+            }
+            // End Condition of Program is met
+            timer.cancel();
+            closeNeighborConnections();
         }
         catch (Exception e) {
             System.out.println("Something went wrong in the run method");
@@ -204,23 +224,32 @@ public class peerProcess {
         PriorityQueue<Pair> maxPairQueue = new PriorityQueue<>(pairComparator);
         
         // key = peerID, value = connection
-        HashMap<Integer, Connection> connectionsDownloadRate = new HashMap<>();
+        HashMap<Integer, Neighbor> connectionsDownloadRate = new HashMap<>();
         
         //logger input parameter
         List<String> listOfPrefNeighbors = new ArrayList<String>();
+
+        // all previous prev neighbors are set to choked unless they are optimisticallyunchoke neighbor
+        for(int i = 0; i < prefNeighbor.size(); i++){
+            Neighbor current = prefNeighbor.get(i);
+            if(current != optUnchoked){
+                messenger.sendMessage(MessageType.CHOKE, null, current.getOutputStream(), current.getInputStream(), current.neighborID);
+            }
+        }
         
         // clear the previous preferred connections
-        prefConnections.clear();
+        prefNeighbor.clear();
 
         int count = numPrefferedConnections;
 
+        //calculate preferred neighbors
         if(fileCompleted){
             // get k random neighbors
-            for (int i = 0; i < connections.size(); i++) {
-                Connection current = connections.get(i);
+            for (int i = 0; i < neighbors.size(); i++) {
+                Neighbor current = neighbors.get(i);
                 if (current.themInterested && count != 0) {
-                    prefConnections.add(current);
-                    listOfPrefNeighbors.add(Integer.toString(current.peerID));
+                    prefNeighbor.add(current);
+                    listOfPrefNeighbors.add(Integer.toString(current.neighborID));
                     count--;
                 }
             }
@@ -228,57 +257,77 @@ public class peerProcess {
         else{
             // calculate download rate for each interested neighbor
             // rate = data amount/time(unchokedinterval)
-            for (int i = 0; i < connections.size(); i++) {
-                Connection current = connections.get(i);
+            for (int i = 0; i < neighbors.size(); i++) {
+                Neighbor current = neighbors.get(i);
                 int dataAmount = 0;
                 if (current.themInterested) {
 
-                    if(connectionsPrevIntervalDataAmount.containsKey(current.peerID)){
-                        dataAmount = connectionsPrevIntervalDataAmount.get(current.peerID);
+                    if(connectionsPrevIntervalDataAmount.containsKey(current.neighborID)){
+                        dataAmount = connectionsPrevIntervalDataAmount.get(current.neighborID);
                     }
-                    maxPairQueue.add(new Pair(current.peerID, dataAmount/unchokeInterval));
-                    connectionsDownloadRate.put(current.peerID, current);
+                    maxPairQueue.add(new Pair(current.neighborID, dataAmount/unchokeInterval));
+                    connectionsDownloadRate.put(current.neighborID, current);
                 }
             }
             // get preffered connections for top k neighbors with highest download rate
             for(int i = 0; i < numPrefferedConnections; i++){
                 Pair pair = maxPairQueue.poll(); // Get and remove the maximum pair
-                Connection current = connectionsDownloadRate.get(pair.key);
-                prefConnections.add(current);
-                listOfPrefNeighbors.add(Integer.toString(current.peerID));
+                Neighbor current = connectionsDownloadRate.get(pair.key);
+                prefNeighbor.add(current);
+                listOfPrefNeighbors.add(Integer.toString(current.neighborID));
             }
         }
         
         connectionsPrevIntervalDataAmount.clear();
         logger.changePreferredNeighbors(listOfPrefNeighbors);
 
-        //unchoked pref neighbors and expects to recieve request message(if neighbor us choked)
-
-        // all previous prev neighbors are set to choked unless they are optimisticallyunchoke neighbor
+        for(int i = 0; i < prefNeighbor.size(); i++){
+            Neighbor current = prefNeighbor.get(i);
+            messenger.sendMessage(MessageType.UNCHOKE, null, current.getOutputStream(), current.getInputStream(), current.neighborID);
+        }
 
     }
 
     private void updateOptUnchoked() {
         // Sort the connections by download rate
-        Vector<Connection> candidatePool = new Vector<>();
+        Vector<Neighbor> candidatePool = new Vector<>();
         Random rand = new Random();
-        for (int i = 0; i < connections.size(); i++) {
-            Connection current = connections.get(i);
+        for (int i = 0; i < neighbors.size(); i++) {
+            Neighbor current = neighbors.get(i);
             if (current.themInterested && current.themChoked) {
                 candidatePool.add(current);
             }
         }
         optUnchoked = candidatePool.get(rand.nextInt(candidatePool.size()));
-        logger.changeOptimisticallyUnchokedNeighbors(Integer.toString(optUnchoked.peerID));
+        logger.changeOptimisticallyUnchokedNeighbors(Integer.toString(optUnchoked.neighborID));
 
-        // send unchocked and expects request message
-        // if prev optunchoked if not in prefconnections send chock
+        // send unchocked 
+        messenger.sendMessage(MessageType.UNCHOKE, null, optUnchoked.getOutputStream(), optUnchoked.getInputStream(), optUnchoked.neighborID);
     }
 
-    public Connection getPeer(int peerID) {
-        for (int i = 0; i < connections.size(); i++) {
-            if (connections.get(i).peerID == peerID) {
-                return connections.get(i);
+    private void closeNeighborConnections() {
+        // Close all connections
+        for (int i = 0; i < neighbors.size(); i++) {
+            neighbors.get(i).closeClient();
+        }
+    }
+
+    public boolean receiveMessage(String msg, ObjectOutputStream out, ObjectInputStream in,int connectionID) {
+        messenger.decodeMessage(msg, out, in, connectionID);
+        return true;
+    }
+    
+    public boolean sendMessage(MessageType type, String msg, ObjectOutputStream out, ObjectInputStream in, int connectionID) {
+        messenger.sendMessage(type, msg, out, in, connectionID);
+        return true;
+    }
+
+    // Getters
+
+    public Neighbor getPeer(int peerID) {
+        for (int i = 0; i < neighbors.size(); i++) {
+            if (neighbors.get(i).neighborID == peerID) {
+                return neighbors.get(i);
             }
         }
 
@@ -288,13 +337,13 @@ public class peerProcess {
     public PeerLogger getLogger() {
         return this.logger;
     }
-    public boolean receiveMessage(String msg, ObjectOutputStream out, int connectionID) {
-        messenger.decodeMessage(msg, out, connectionID);
-        return true;
+
+    public String getBitfieldString() {
+        String bitfieldString = "";
+        for (int i = 0; i < bitfield.length; i++) {
+            bitfieldString += Integer.toString(bitfield[i]);
+        }
+        return bitfieldString;
     }
 
-    public boolean sendMessage(int type, String msg, ObjectOutputStream out, int connectionID) {
-        messenger.sendMessage(type, msg, out, connectionID);
-        return true;
-    }
 }

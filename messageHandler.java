@@ -1,4 +1,6 @@
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+
 
 public class messageHandler {
 
@@ -12,41 +14,44 @@ public class messageHandler {
 
     // decode message - returns message type with payload
     // peerID is who the message came from
-    public void decodeMessage(String msg, ObjectOutputStream out, int peerID) {
+    
+    // receiving message from peer
+    public void decodeMessage(String msg, ObjectOutputStream out, ObjectInputStream in, int peerID) {
         try {
+            //might be in bits format and needs to be converted into ints
             int length = Integer.parseInt(msg.substring(0,4));
             int type = Integer.parseInt(msg.substring(4,5));
-
-            if (type == 0) {
-                handleChoke(peerID);
+            MessageType messageType = MessageType.values()[type];
+            
+            switch (messageType) {
+                case CHOKE:
+                    handleChoke(peerID);
+                    break;
+                case UNCHOKE:
+                    handleUnchoke(peerID);
+                    break;
+                case INTERESTED:
+                    handleInterested(peerID);
+                    break;
+                case UNINTERESTED:
+                    handleUninterested(peerID);
+                    break;
+                case HAVE:
+                    handleHave(peerID, length);
+                    break;
+                case BITFIELD:
+                    handleBitfield(msg.substring(6, 6 + length), peerID);
+                    break;
+                case REQUEST:
+                    handleRequest(peerID, length);
+                    break;
+                case PIECE:
+                    handlePiece(peerID, length);
+                    break;
+                default:
+                    throw new RuntimeException("Invalid message type");
             }
-            else if (type == 1) {
-                handleUnchoke(peerID);
-            }
-            else if (type == 2) {
-                handleInterested(peerID);
-            }
-            else if (type == 3) {
-                handleUninterested(peerID);
-            }
-            else if (type == 4) {
-                handleHave(peerID, length);
-            }
-            else if (type == 5) {
-                handleBitfield(msg.substring(6, 6 + length), peerID);
-            }
-            else if (type == 6) {
-                handleRequest(peerID, length);
-            }
-            else if (type == 7) {
-                // add data amount to calculate download rate
-
-                handlePiece(peerID, length);
-            }
-            else {
-                // Something is wrong
-                return;
-            }
+           
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -54,39 +59,39 @@ public class messageHandler {
     }
 
     // *** MESSAGE HANDLING *** //
-    public void handleChoke(int peerID) { 
-        Connection neighbor = peer.getPeer(peerID);
+    private void handleChoke(int peerID) { 
+        Neighbor neighbor = peer.getPeer(peerID);
         neighbor.setUsChoked(true); 
         peer.getLogger().chokedNeighbor(Integer.toString(peerID));
     }
 
-    public void handleUnchoke(int peerID) {
-        Connection neighbor = peer.getPeer(peerID);
+    private void handleUnchoke(int peerID) {
+        Neighbor neighbor = peer.getPeer(peerID);
         neighbor.setUsChoked(false);
         peer.getLogger().unchokedNeighbor(Integer.toString(peerID));
     }
 
-    public void handleInterested(int peerID) {
-        Connection neighbor = peer.getPeer(peerID);
+    private void handleInterested(int peerID) {
+        Neighbor neighbor = peer.getPeer(peerID);
         neighbor.setUsInterested(true);
         peer.getLogger().receiveInterested(Integer.toString(peerID));
     }
 
-    public void handleUninterested(int peerID) {
-        Connection neighbor = peer.getPeer(peerID);
+    private void handleUninterested(int peerID) {
+        Neighbor neighbor = peer.getPeer(peerID);
         neighbor.setUsInterested(false);
         peer.getLogger().receiveNotInterested(Integer.toString(peerID));
     }
 
-    public void handleHave(int peerID, int len) {
+    private void handleHave(int peerID, int len) {
         // This function will handle a have message received
         peer.getLogger().receiveHave(Integer.toString(peerID), len);
     }
 
-    public void handleBitfield(String peerBitfield, int peerID) {
+    private void handleBitfield(String peerBitfield, int peerID) {
         if (peerBitfield.length() == 0) {
             // Set connections bitfield to empty all zero
-            Connection neighbor = peer.getPeer(peerID);
+            Neighbor neighbor = peer.getPeer(peerID);
             neighbor.clearBitfield();
             return;
         }
@@ -117,12 +122,12 @@ public class messageHandler {
         return;
     }
 
-    public void handleRequest(int peerID, int len) {
+    private void handleRequest(int peerID, int len) {
         // This function will handle a request message received
 
     }
 
-    public void handlePiece(int peerID, int len) {
+    private void handlePiece(int peerID, int len) {
         int pieceIndex = 0;
         int numPieces = 0;
         // This function will handle a piece message received
@@ -135,32 +140,32 @@ public class messageHandler {
     }
 
 
-
-    public void sendMessage(int type, String payload, ObjectOutputStream out, int peerID) {
+    // sending message to peer
+    public void sendMessage(MessageType type, String payload, ObjectOutputStream out, ObjectInputStream in, int peerID) {
         // PeerID is who the message needs to go to
         switch(type) {
-            case 0:
+            case CHOKE:
                 sendChoke();
                 break;
-            case 1:
+            case UNCHOKE:
                 sendUnchoke();
                 break;
-            case 2:
+            case INTERESTED:
                 sendInterested();
                 break;
-            case 3:
+            case UNINTERESTED:
                 sendUninterested();
                 break;
-            case 4:
+            case HAVE:
                 sendHave(payload);
                 break;
-            case 5:
+            case BITFIELD:
                 sendBitfield();
                 break;
-            case 6:
+            case REQUEST:
                 sendRequest(payload);
                 break;
-            case 7:
+            case PIECE:
                 sendPiece(payload);
                 break;
             default:
@@ -169,36 +174,36 @@ public class messageHandler {
     }
 
     // *** MESSAGE SENDING *** //
-    public void sendChoke() {
+    private void sendChoke() {
         String msg = "00010";
         //sendMessage(msg);
     }
-    public void sendUnchoke() {
+    private void sendUnchoke() {
         String msg = "00011";
         //sendMessage(msg);
     }
-    public void sendInterested() {
+    private void sendInterested() {
         String msg = "00012";
         //sendMessage(msg);
     }
-    public void sendUninterested() {
+    private void sendUninterested() {
         String msg = "00013";
         //sendMessage(msg);
     }
 
-    public void sendHave(String payload) {
+    private void sendHave(String payload) {
         // This function will send the have message with the necessary payload
     }
 
-    public void sendBitfield() {
+    private void sendBitfield() {
         //sendMessage(Arrays.toString(peer.bitfield));
     }
 
-    public void sendRequest(String payload) {
+    private void sendRequest(String payload) {
         // This function will send the request message with the necessary payload
     }
 
-    public void sendPiece(String payload) {
+    private void sendPiece(String payload) {
         // This function will send the piece message with the necessary payload
     }
 }

@@ -1,7 +1,5 @@
 import java.net.*;
-import java.sql.Connection;
 import java.io.*;
-import java.util.Arrays;
 
 public class Client {
 
@@ -12,7 +10,7 @@ public class Client {
     String MESSAGE; //capitalized message read from the server
     String hostName;
     int portNum;
-    int connectionID; 
+    int neighborID; 
     peerProcess peer; // Parent peer of this client
     String header = "P2PFILESHARINGPROJ";
     String zeros = "0000000000";
@@ -22,25 +20,23 @@ public class Client {
         peer = p;
         this.hostName = hostName;
         this.portNum = portNum;
-        this.connectionID = connectionID;
+        this.neighborID = connectionID;
     }
 
-    void run() {
-        try {
-            //create a socket to connect to the server
+    public void startConnection(){
+        try{
             requestSocket = new Socket("localhost", portNum);
-
             //initialize inputStream and outputStream
             out = new ObjectOutputStream(requestSocket.getOutputStream());
             out.flush();
             in = new ObjectInputStream(requestSocket.getInputStream());
-            
-            try {
-                // handshake();
-                sendHandshakeMessage();
-                this.peer.getLogger().generateTCPLogSender(Integer.toString(this.connectionID));
-                System.out.println("Connected to " + hostName + " in port " + portNum);
 
+            try{
+                sendHandshakeMessage();
+
+                this.peer.getLogger().generateTCPLogSender(Integer.toString(neighborID));
+                System.out.println("Connected to " + hostName + " in port " + portNum);
+                
                 //Wait for handshake response from server
                 String handshakeResponse = (String)in.readObject();
                 System.out.println("Received handshake Response: " + handshakeResponse);
@@ -48,13 +44,8 @@ public class Client {
                 //Verify Handshake Response
                 verifyHandshakeResponse(handshakeResponse);
                 System.out.println("Handshake verified.");
+                
 
-                //if we have some bits send bitfield
-                while(true) {
-                    System.out.println("Waiting for server Response");
-                    message = (String) in.readObject();
-                    peer.receiveMessage(message, out, connectionID);
-                }
             }catch(Exception classnot){
                 System.err.println("Data received in unknown format");
             }
@@ -68,16 +59,17 @@ public class Client {
         catch(IOException ioException){
             ioException.printStackTrace();
         }
-        finally{
-            //Close connections
-            try{
-                in.close();
-                out.close();
-                requestSocket.close();
-            }
-            catch(IOException ioException){
-                ioException.printStackTrace();
-            }
+    }
+    
+
+    public void closeConnection() {
+        try {
+            in.close();
+            out.close();
+            requestSocket.close();
+        }
+        catch(IOException ioException) {
+            ioException.printStackTrace();
         }
     }
 
@@ -93,7 +85,7 @@ public class Client {
         String zero = msg.substring(18,28); 
         int receivedID = Integer.parseInt(msg.substring(28,32));
 
-        if (!Header.equals(this.header) || !zero.equals(this.zeros) || this.connectionID != receivedID) { 
+        if (!Header.equals(this.header) || !zero.equals(this.zeros) || this.neighborID != receivedID) { 
             throw new RuntimeException(); 
         }
 

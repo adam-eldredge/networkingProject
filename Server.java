@@ -6,7 +6,6 @@ public class Server {
     peerProcess hostPeer;
     int portNum;
     ServerSocket serverSocket = null;
-    
 
     public Server(peerProcess peer, int portNum) {
         this.hostPeer = peer;
@@ -17,7 +16,7 @@ public class Server {
         System.out.println("The server is running on port: " + portNum);
         try {
             serverSocket = new ServerSocket(portNum);
-
+ 
             while(true) {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("New client connected");
@@ -63,23 +62,23 @@ public class Server {
                 in = new ObjectInputStream(clientSocket.getInputStream());
                 try{
                     // receive handshake
-                    this.message = (String)in.readObject();
+                    message = (String)in.readObject();
                     String header = message.substring(0,18);
                     String zero = message.substring(18,28); 
-                    this.clientPeerID = message.substring(28, 32);
+                    clientPeerID = message.substring(28, 32);
 
                     // send handshake
-                    this.MESSAGE = header + zero + this.serverPeerIntance.ID;
+                    MESSAGE = header + zero + serverPeerIntance.ID;
                     sendMessage(this.MESSAGE);
 
                     // log connection received
-                    serverPeerIntance.getLogger().generateTCPLogReceiver(this.clientPeerID);
+                    serverPeerIntance.getLogger().generateTCPLogReceiver(clientPeerID);
 
                     // receive stream of messages
                     while(true) {
                         //message handler functionality
                         message = (String) in.readObject();
-                        this.serverPeerIntance.receiveMessage(message, out, Integer.parseInt(clientPeerID));
+                        serverPeerIntance.receiveMessage(message, out, in, Integer.parseInt(clientPeerID));
                     }
                 }
                 catch(Exception classnot){
@@ -87,7 +86,7 @@ public class Server {
                 }
             }
             catch(IOException ioException){
-                System.out.println("Disconnect with Client " + this.clientPeerID);
+                System.out.println("Disconnect with Client " + clientPeerID);
             }
             finally{
                 //Close connections
@@ -97,7 +96,7 @@ public class Server {
                     clientSocket.close();
                 }
                 catch(IOException ioException){
-                    System.out.println("Disconnect with Client " + this.clientPeerID);
+                    System.out.println("Disconnect with Client " + clientPeerID);
                 }
             }
         }
