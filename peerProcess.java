@@ -158,6 +158,9 @@ public class peerProcess {
 
                     // Connect our peer to the other peer
                     Neighbor priorPeer = new Neighbor(this, pID, hostName, portNum, hasFile);
+                    
+                    priorPeer.startClient();
+                    messenger.sendMessage(MessageType.BITFIELD, getBitfieldString(), priorPeer.getOutputStream(),priorPeer.getInputStream(), priorPeer.neighborID);
                     // Add connection to this peers list of connections
                     this.neighbors.add(priorPeer);
                 }
@@ -172,13 +175,6 @@ public class peerProcess {
             }
         }
 
-        //send bitfield to all prior peers
-        for (int i = 0; i < this.neighbors.size(); i++) {
-            System.out.println("Creating client to connect to peer: " + neighbors.get(i).neighborID);
-            Neighbor current = neighbors.get(i);
-            current.startClient();
-            messenger.sendMessage(MessageType.BITFIELD, getBitfieldString(), current.getOutputStream(),current.getInputStream(), current.neighborID);
-        }
     }
     
     public void start() {
