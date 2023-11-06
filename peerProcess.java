@@ -84,6 +84,8 @@ public class peerProcess {
         Scanner commonReader = null;
         Scanner peerReader = null;
 
+
+
         try {
             File common = new File("Common.cfg");
             commonReader = new Scanner(common);

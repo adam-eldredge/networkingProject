@@ -24,14 +24,16 @@ public class PeerLogger{
             String logFileDir = "project";
             File file = new File(logFileDir);
             file.mkdir();
-            this.logFileName = logFileDir + "~/log_peer_" + this.peerId + ".log";
+            this.logFileName = logFileDir + "/log_peer_" + this.peerId + ".log";
             this.fh = new FileHandler(this.logFileName, false);
 
             System.setProperty("java.util.logging.SimpleFormatter.format", "%5$s %n");
+
+            
             this.fh.setFormatter(new SimpleFormatter());
             this.logger = Logger.getLogger("PeerLogger");
             this.logger.setUseParentHandlers(false);
-
+            
             this.logger.addHandler(this.fh);
 
         }catch(IOException e){
