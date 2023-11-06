@@ -25,7 +25,7 @@ public class peerProcess {
     messageHandler      messenger           = new messageHandler(this, bitFieldSize);
     Vector<Neighbor>  neighbors         = new Vector<>();
     Vector<Neighbor>  prefNeighbor     = new Vector<>();
-    Timer timer = new Timer();
+    private Timer timer = null;
 
     // add all data exchanged to this hashmap: key = peerID, value = data amount
     HashMap<Integer, Integer> connectionsPrevIntervalDataAmount = new HashMap<>();
@@ -143,7 +143,7 @@ public class peerProcess {
                     // start the server
                     this.server = new Server(this, portNum);
                     try {
-                        server.run();
+                        server.start();
                     }
                     catch (Exception e) {
                         System.out.println("Something went wrong in the run method");
@@ -180,41 +180,42 @@ public class peerProcess {
     public void start() {
         
         try {
-            TimerTask updatePreConnectionsTask = new TimerTask() {
+            timer = new Timer();
+            long unchokedIntervalSeconds = unchokeInterval * 1000;
+            long optimisticUnchokedIntervalSeconds = optimisticUnchokeInterval * 1000;
+
+            // Schedule the updatePrefConnectionsTask to run every 'unchokeInterval' milliseconds
+            timer.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
                     // Update the preferred connections
                     updatePrefConnections();
-                    timer.schedule(this, unchokeInterval);
+
+                    // can potentially terminate here by checking if all peers have the file and then calling closeNeighborConnections() and stopTimer()
+
                 }
-            };
-            TimerTask updateOptUnchokedTask = new TimerTask() {
+            }, 0, unchokedIntervalSeconds);
+
+            //Schedule the updateOptUnchokedTask to run every 'optimisticUnchokeInterval' milliseconds
+            timer.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
-                    // Update the preferred connections
+                    // Update the optimistic unchoked connections
                     updateOptUnchoked();
 
-                    timer.schedule(this, optimisticUnchokeInterval);
+                    // can potentially terminate here by checking if all peers have the file and then calling closeNeighborConnections() and stopTimer()
                 }
-            };
-
-            // schedule the tasks
-            timer.schedule(updatePreConnectionsTask, unchokeInterval);
-            timer.schedule(updateOptUnchokedTask, optimisticUnchokeInterval);
-
-            
-            //set terminate to true when all peers have the complete file
-            while(!terminate){
-                continue;
-            }
-            // End Condition of Program is met
-            timer.cancel();
-            closeNeighborConnections();
+            }, 0, optimisticUnchokedIntervalSeconds);
         }
         catch (Exception e) {
             System.out.println("Something went wrong in the run method");
         }
         
+    }
+    public void stopTimer(){
+        if (timer != null) {
+            timer.cancel();
+        }
     }
 
     private void updatePrefConnections() {
@@ -226,6 +227,7 @@ public class peerProcess {
         
         //logger input parameter
         List<String> listOfPrefNeighbors = new ArrayList<String>();
+        
 
         // all previous prev neighbors are set to choked unless they are optimisticallyunchoke neighbor
         for(int i = 0; i < prefNeighbor.size(); i++){
@@ -237,7 +239,7 @@ public class peerProcess {
         
         // clear the previous preferred connections
         prefNeighbor.clear();
-
+        
         int count = numPrefferedConnections;
 
         //calculate preferred neighbors
@@ -269,6 +271,9 @@ public class peerProcess {
             }
             // get preffered connections for top k neighbors with highest download rate
             for(int i = 0; i < numPrefferedConnections; i++){
+                if(maxPairQueue.isEmpty()){
+                    break;
+                }
                 Pair pair = maxPairQueue.poll(); // Get and remove the maximum pair
                 Neighbor current = connectionsDownloadRate.get(pair.key);
                 prefNeighbor.add(current);
@@ -276,13 +281,16 @@ public class peerProcess {
             }
         }
         
+        
         connectionsPrevIntervalDataAmount.clear();
+        
         logger.changePreferredNeighbors(listOfPrefNeighbors);
-
+        
         for(int i = 0; i < prefNeighbor.size(); i++){
             Neighbor current = prefNeighbor.get(i);
             messenger.sendMessage(MessageType.UNCHOKE, null, current.getOutputStream(), current.getInputStream(), current.neighborID);
         }
+        
 
     }
 
@@ -296,11 +304,18 @@ public class peerProcess {
                 candidatePool.add(current);
             }
         }
-        optUnchoked = candidatePool.get(rand.nextInt(candidatePool.size()));
-        logger.changeOptimisticallyUnchokedNeighbors(Integer.toString(optUnchoked.neighborID));
 
-        // send unchocked 
-        messenger.sendMessage(MessageType.UNCHOKE, null, optUnchoked.getOutputStream(), optUnchoked.getInputStream(), optUnchoked.neighborID);
+        //if we dont need to change opt unchoked neighbor (this happens when neighbors.size() == 0 or !current.themInterested || !current.themChoked
+        if (!candidatePool.isEmpty()) {
+            optUnchoked = candidatePool.get(rand.nextInt(candidatePool.size()));
+            logger.changeOptimisticallyUnchokedNeighbors(Integer.toString(optUnchoked.neighborID));
+    
+            // Send "UNCHOKE" message
+            messenger.sendMessage(MessageType.UNCHOKE, null, optUnchoked.getOutputStream(), optUnchoked.getInputStream(), optUnchoked.neighborID);
+        } else {
+            // Handle the case where there are no valid candidates to choose from.
+            return;
+        }
     }
 
     private void closeNeighborConnections() {

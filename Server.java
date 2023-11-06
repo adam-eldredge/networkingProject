@@ -1,7 +1,7 @@
 import java.net.*;
 import java.io.*;
 
-public class Server {
+public class Server extends Thread{
     
     peerProcess hostPeer;
     int portNum;
@@ -12,7 +12,7 @@ public class Server {
         this.portNum = portNum;
     }
 
-    public void run() throws Exception {
+    public void run(){
         System.out.println("The server is running on port: " + portNum);
         try {
             serverSocket = new ServerSocket(portNum);

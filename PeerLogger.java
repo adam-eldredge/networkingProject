@@ -59,7 +59,9 @@ public class PeerLogger{
         for(String n: neighbor){
             neighborList += n + ",";
         }
-        neighborList = neighborList.substring(0, neighborList.length() - 1);
+        if(neighborList.length() > 0){
+            neighborList = neighborList.substring(0, neighborList.length() - 1);
+        }
         this.logger.log(Level.INFO,
             "[" + currTime + "]: Peer " + this.peerId + " has the preferred neighbors " + "[" + neighborList + "]" + ".\n");
     }
