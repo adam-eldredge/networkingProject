@@ -29,6 +29,7 @@ public class peerProcess {
 
     // add all data exchanged to this hashmap: key = peerID, value = data amount
     HashMap<Integer, Integer> connectionsPrevIntervalDataAmount = new HashMap<>();
+    
     PeerLogger          logger;
     Boolean             fileCompleted             = false;
     Boolean             terminate   = false;
@@ -218,6 +219,14 @@ public class peerProcess {
         }
     }
 
+     private void closeNeighborConnections() {
+        // Close all connections
+        for (int i = 0; i < neighbors.size(); i++) {
+            neighbors.get(i).closeClient();
+        }
+    }
+
+
     private void updatePrefConnections() {
         // first = peerID, second = download rate
         PriorityQueue<Pair> maxPairQueue = new PriorityQueue<>(pairComparator);
@@ -318,12 +327,7 @@ public class peerProcess {
         }
     }
 
-    private void closeNeighborConnections() {
-        // Close all connections
-        for (int i = 0; i < neighbors.size(); i++) {
-            neighbors.get(i).closeClient();
-        }
-    }
+   
 
     public boolean receiveMessage(String msg, ObjectOutputStream out, ObjectInputStream in,int connectionID) {
         messenger.decodeMessage(msg, out, in, connectionID);
