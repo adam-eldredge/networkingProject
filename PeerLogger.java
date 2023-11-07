@@ -14,8 +14,8 @@ public class PeerLogger{
     private FileHandler fh;
     private SimpleDateFormat dateFormat = null;
 
-    public PeerLogger(String peerId){
-        this.peerId = peerId;
+    public PeerLogger(int peerId){
+        this.peerId = Integer.toString(peerId);
         startLogger();
     }
     public void startLogger(){
@@ -24,14 +24,16 @@ public class PeerLogger{
             String logFileDir = "project";
             File file = new File(logFileDir);
             file.mkdir();
-            this.logFileName = logFileDir + "~/log_peer_" + this.peerId + ".log";
+            this.logFileName = logFileDir + "/log_peer_" + this.peerId + ".log";
             this.fh = new FileHandler(this.logFileName, false);
 
             System.setProperty("java.util.logging.SimpleFormatter.format", "%5$s %n");
+
+            
             this.fh.setFormatter(new SimpleFormatter());
             this.logger = Logger.getLogger("PeerLogger");
             this.logger.setUseParentHandlers(false);
-
+            
             this.logger.addHandler(this.fh);
 
         }catch(IOException e){
@@ -57,7 +59,9 @@ public class PeerLogger{
         for(String n: neighbor){
             neighborList += n + ",";
         }
-        neighborList = neighborList.substring(0, neighborList.length() - 1);
+        if(neighborList.length() > 0){
+            neighborList = neighborList.substring(0, neighborList.length() - 1);
+        }
         this.logger.log(Level.INFO,
             "[" + currTime + "]: Peer " + this.peerId + " has the preferred neighbors " + "[" + neighborList + "]" + ".\n");
     }
