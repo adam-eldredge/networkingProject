@@ -13,8 +13,8 @@ public class Neighbor {
     public int[] neighborBitfield;
     
     // State variables
-    public boolean themChoked = true; // Are they choked by us (not them to us)
-    public boolean usChoked = false; // Are we choked by them (not them to us)
+    public boolean themChoked = true; // Are they choked by us
+    public boolean usChoked = false; // Are we choked by them 
     public boolean themInterested = false;
     public boolean usInterested = false;
 

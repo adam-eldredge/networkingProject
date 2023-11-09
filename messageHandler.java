@@ -1,5 +1,6 @@
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.Random;
 
 
 public class messageHandler {
@@ -37,16 +38,18 @@ public class messageHandler {
                     handleUninterested(peerID);
                     break;
                 case HAVE:
-                    handleHave(peerID, length);
+                    handleHave(peerID, Integer.parseInt(msg.substring(5, 9)), out, in);
                     break;
                 case BITFIELD:
-                    handleBitfield(msg.substring(6, 6 + length), peerID);
+                    handleBitfield(msg.substring(5, 5 + length - 1), peerID, out, in);
                     break;
                 case REQUEST:
-                    handleRequest(peerID, length);
+                    handleRequest(peerID, Integer.parseInt(msg.substring(5, 9)), out, in);
                     break;
                 case PIECE:
-                    handlePiece(peerID, length);
+                    int index = Integer.parseInt(msg.substring(5,9));
+                    String payload = msg.substring(9, 9 + length - 5);
+                    handlePiece(peerID, index, payload, out, in);
                     break;
                 default:
                     throw new RuntimeException("Invalid message type");
@@ -73,25 +76,39 @@ public class messageHandler {
 
     private void handleInterested(int peerID) {
         Neighbor neighbor = peer.getPeer(peerID);
-        neighbor.setUsInterested(true);
+        neighbor.setThemInterested(true);
         peer.getLogger().receiveInterested(Integer.toString(peerID));
     }
 
     private void handleUninterested(int peerID) {
         Neighbor neighbor = peer.getPeer(peerID);
-        neighbor.setUsInterested(false);
+        neighbor.setThemInterested(false);
         peer.getLogger().receiveNotInterested(Integer.toString(peerID));
     }
 
-    private void handleHave(int peerID, int len) {
-        // This function will handle a have message received
-        peer.getLogger().receiveHave(Integer.toString(peerID), len);
+    private void handleHave(int peerID, int index, ObjectOutputStream out, ObjectInputStream in) {
+        // Check to see if we have the piece that we have received an index for, if not send an interested message and set us as interested
+        Neighbor neighbor = peer.getPeer(peerID);
+
+        // Update their bitfield
+        neighbor.neighborBitfield[index] = 1;
+
+        // Check to see if we are interested in that piece
+        if (peer.bitfield[index] == 0) {
+            neighbor.setUsInterested(true);
+
+            // SEND INTERESTED MESSAGE HERE
+            sendMessage(MessageType.INTERESTED, null, out, in, peerID);
+        }
+
+        peer.getLogger().receiveHave(Integer.toString(peerID), index);
     }
 
-    private void handleBitfield(String peerBitfield, int peerID) {
+    private void handleBitfield(String peerBitfield, int peerID, ObjectOutputStream out, ObjectInputStream in) {
+        Neighbor neighbor = peer.getPeer(peerID);
+
         if (peerBitfield.length() == 0) {
             // Set connections bitfield to empty all zero
-            Neighbor neighbor = peer.getPeer(peerID);
             neighbor.clearBitfield();
             return;
         }
@@ -106,37 +123,72 @@ public class messageHandler {
             boolean interested = false;
             for (int i = 0; i < bitFieldSize; i++) {
                 if ((receivedBitfield[i] - peer.bitfield[i]) == 1) {
-                    // Checking to see if they have a 1 and we have a 0
-                    // Meaning they have a piece that we dont have so we are interested
                     interested = true;
                 }
             }
 
             if (interested) {
-                sendInterested();
+                sendMessage(MessageType.INTERESTED, null, out, in, peerID);
             }
             else {
-                sendUninterested();
+                sendMessage(MessageType.UNINTERESTED, null, out, in, peerID);
             }
         }
         return;
     }
 
-    private void handleRequest(int peerID, int len) {
+    private void handleRequest(int peerID, int index, ObjectOutputStream out, ObjectInputStream in) {
         // This function will handle a request message received
+        // Make sure we have the peice and send it
+        if (peer.bitfield[index] == 0) return;
 
+        // TODO - WHAT SHOULD THE PAYLOAD BE
+        String payload = "hello";
+
+        sendMessage(MessageType.PIECE, payload, out, in, peerID);
     }
 
-    private void handlePiece(int peerID, int len) {
-        int pieceIndex = 0;
-        int numPieces = 0;
+    private void handlePiece(int peerID, int index, String payload, ObjectOutputStream out, ObjectInputStream in) {
         // This function will handle a piece message received
+        // Download piece here
+        savePiece(payload, index);
         
-        
-        peer.getLogger().downloadPiece(Integer.toString(peerID), pieceIndex, numPieces);
+        // Find number of pieces after download
+        int numPieces = numPieces(peer.bitfield);
+
+        peer.getLogger().downloadPiece(Integer.toString(peerID), index, numPieces);
 
         //if and only if we have the complete file/all pieces
-        peer.getLogger().completeDownload();
+        if (fullBitfield(peer.bitfield)) { peer.getLogger().completeDownload(); }
+
+        // Randomly choose another piece that we don't have and havent requested
+        Random rand = new Random();
+        int reqIndex; 
+        do {
+            reqIndex = rand.nextInt(peer.bitFieldSize);
+        } while (peer.bitfield[reqIndex] == 1);
+
+        sendMessage(MessageType.REQUEST, String.valueOf(reqIndex), out, in, peerID);
+    }
+
+    private boolean fullBitfield(int[] bitfield) {
+        for (int i = 0; i < bitfield.length; i++) {
+            if (bitfield[i] == 0) return false;
+        }
+        return true;
+    }
+
+    private void savePiece(String payload, int index) {
+        // TODO - Save the payload into the correct index here
+    }
+
+    private int numPieces(int[] bitfield) {
+        int count = 0;
+        for (int i = 0; i < bitfield.length; i++) {
+            if (bitfield[i] == 1) count ++;
+        }
+
+        return count;
     }
 
 

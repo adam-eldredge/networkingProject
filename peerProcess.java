@@ -33,6 +33,8 @@ public class peerProcess {
     Boolean             fileCompleted             = false;
     Boolean             terminate   = false;
 
+    // list of indices of requested pieces
+    int[]   requested;
 
     // Common variables
     int     numPrefferedConnections;
