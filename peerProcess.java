@@ -1,4 +1,6 @@
 import java.net.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -12,6 +14,7 @@ import java.util.TimerTask;
 import java.util.HashMap;
 import java.util.PriorityQueue;
 import java.util.Comparator;
+import java.nio.file.Files;
 
 public class peerProcess {
     
@@ -20,6 +23,7 @@ public class peerProcess {
     int                 bitFieldSize        = 16;
     int                 portNum;
     int[]               bitfield            = new int[16];
+    byte[]              filebytes;
     Server              server              = null;
     Neighbor          optUnchoked;
     messageHandler      messenger           = new messageHandler(this, bitFieldSize);
@@ -60,10 +64,11 @@ public class peerProcess {
     };
 
 
-    public peerProcess(int id)
+    public peerProcess(int id) throws IOException
     {
         this.ID = id;
         this.logger = new PeerLogger(id);
+        filebytes = Files.readAllBytes(Paths.get("/path/to/file"));
     }
 
     // Main
@@ -161,7 +166,7 @@ public class peerProcess {
                     Neighbor priorPeer = new Neighbor(this, pID, hostName, portNum, hasFile);
                     
                     priorPeer.startClient();
-                    messenger.sendMessage(MessageType.BITFIELD, getBitfieldString(), priorPeer.getOutputStream(),priorPeer.getInputStream(), priorPeer.neighborID);
+                    messenger.sendMessage(MessageType.BITFIELD, getBitfieldString(), priorPeer.getOutputStream(), priorPeer.getInputStream(), priorPeer.neighborID);
                     // Add connection to this peers list of connections
                     this.neighbors.add(priorPeer);
                 }

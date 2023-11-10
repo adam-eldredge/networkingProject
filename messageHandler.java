@@ -114,7 +114,7 @@ public class messageHandler {
             }
 
             if (interested) {
-                sendInterested();
+                // sendInterested();
             }
             else {
                 sendUninterested();
@@ -142,7 +142,7 @@ public class messageHandler {
 
 
     // sending message to peer
-    public void sendMessage(MessageType type, String payload, ObjectOutputStream out, ObjectInputStream in, int peerID) {
+    public void sendMessage(MessageType type, String payload, ObjectOutputStream out, ObjectInputStream in, int peerID, int pieceIndex) {
         // PeerID is who the message needs to go to
         switch(type) {
             case CHOKE:
@@ -155,19 +155,19 @@ public class messageHandler {
                 sendInterested(out, in, peerID);
                 break;
             case UNINTERESTED:
-                sendUninterested();
+                sendUninterested(out, in, peerID);
                 break;
             case HAVE:
-                sendHave(payload);
+                sendHave(out, in, peerID, pieceIndex);
                 break;
             case BITFIELD:
-                sendBitfield();
+                sendBitfield(out, in, peerID);
                 break;
             case REQUEST:
-                sendRequest(payload);
+                sendRequest(out, in, peerID, pieceIndex);
                 break;
             case PIECE:
-                sendPiece(payload);
+                sendPiece(out, in, peerID, pieceIndex);
                 break;
             default:
                 break;
@@ -178,7 +178,7 @@ public class messageHandler {
     private void sendChoke(ObjectOutputStream out, ObjectInputStream in, int peerID) {
         String msg = "00010";
         try {
-            out.writeObject(msg);
+            out.writeBytes(msg);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -186,7 +186,7 @@ public class messageHandler {
     private void sendUnchoke(ObjectOutputStream out, ObjectInputStream in, int peerID) {
         String msg = "00011";
         try {
-            out.writeObject(msg);
+            out.writeBytes(msg);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -194,29 +194,58 @@ public class messageHandler {
     private void sendInterested(ObjectOutputStream out, ObjectInputStream in, int peerID) {
         String msg = "00012";
         try {
-            out.writeObject(msg);
+            out.writeBytes(msg);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    private void sendUninterested() {
+    private void sendUninterested(ObjectOutputStream out, ObjectInputStream in, int peerID) {
         String msg = "00013";
-        //sendMessage(msg);
+        try {
+            out.writeBytes(msg);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    private void sendHave(String payload) {
-        // This function will send the have message with the necessary payload
+    private void sendHave(ObjectOutputStream out, ObjectInputStream in, int peerID, int pieceIndex) {
+        String msg = "00014";
+        try {
+            out.writeBytes(msg);
+            out.writeInt(pieceIndex);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }       
     }
 
-    private void sendBitfield() {
-        //sendMessage(Arrays.toString(peer.bitfield));
+    private void sendBitfield(ObjectOutputStream out, ObjectInputStream in, int peerID) {
+        String msg = "00015";
+        try {
+            out.writeBytes(msg);
+            out.writeBytes(peer.getBitfieldString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    private void sendRequest(String payload) {
-        // This function will send the request message with the necessary payload
-    }
+    private void sendRequest(ObjectOutputStream out, ObjectInputStream in, int peerID, int pieceIndex) {
+        String msg = "00016";
+        try {
+            out.writeBytes(msg);
+            out.writeInt(pieceIndex);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }       
+    }   
 
-    private void sendPiece(String payload) {
-        // This function will send the piece message with the necessary payload
+    private void sendPiece(ObjectOutputStream out, ObjectInputStream in, int peerID, int pieceIndex) {
+        String msg = "00017";
+        try {
+            out.writeBytes(msg);
+            out.writeInt(pieceIndex);
+            out.write(peer.filebytes, pieceIndex, (int)peer.pieceSize);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }       
     }
 }
