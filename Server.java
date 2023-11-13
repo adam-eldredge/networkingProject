@@ -77,8 +77,7 @@ public class Server extends Thread{
                     // receive stream of messages
                     while(true) {
                         //message handler functionality
-                        message = (String) in.readObject();
-                        serverPeerIntance.receiveMessage(message, out, in, Integer.parseInt(clientPeerID));
+                        serverPeerIntance.receiveMessage(out, in, Integer.parseInt(clientPeerID));
                     }
                 }
                 catch(Exception classnot){
