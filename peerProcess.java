@@ -22,10 +22,10 @@ public class peerProcess {
     int                 ID;
     int                 bitFieldSize        = 16;
     int                 portNum;
-    int[]               bitfield            = new int[16];
+    Bitfield            bitfield;
     byte[]              filebytes;
     Server              server              = null;
-    Neighbor          optUnchoked;
+    Neighbor            optUnchoked;
     messageHandler      messenger           = new messageHandler(this, bitFieldSize);
     Vector<Neighbor>  neighbors         = new Vector<>();
     Vector<Neighbor>  prefNeighbor     = new Vector<>();
@@ -68,21 +68,30 @@ public class peerProcess {
     {
         this.ID = id;
         this.logger = new PeerLogger(id);
-        filebytes = Files.readAllBytes(Paths.get("/path/to/file"));
     }
 
     // Main
-    public static void main (String[] args) {
+    public static void main (String[] args){
         
         // Create a new peer
-        peerProcess peer = new peerProcess(Integer.valueOf(args[0]));
+        peerProcess peer;
+        try {
+            peer = new peerProcess(Integer.valueOf(args[0]));
+
+            // Read the config files
+            peer.setup();
     
-        // Read the config files
-        peer.setup();
+            // Start the peer
+            peer.start();
 
-        // Start the peer
-        peer.start();
-
+        } catch (NumberFormatException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }    
+    
 
     }
 
@@ -119,6 +128,8 @@ public class peerProcess {
             // Piecesize
             commonReader.next();
             this.pieceSize = Long.parseLong(commonReader.next());
+
+            this.bitfield = new Bitfield((int)fileSize/(int)pieceSize);
         }
         catch (FileNotFoundException e) { 
             System.out.println("Could not find file");
@@ -142,9 +153,16 @@ public class peerProcess {
                 if (this.ID == pID) {
                     this.portNum = Integer.parseInt(components[2]);
 
-                    // Set the bitfield
-                    Arrays.fill(this.bitfield, Integer.parseInt(components[3]));
-                    fileCompleted = (Integer.parseInt(components[3]) == 1);
+                    // Set the bitfield and read filebytes
+                    if(Integer.parseInt(components[3]) == 1)
+                    {
+                        this.filebytes = Files.readAllBytes(Paths.get(this.filename));
+                        this.bitfield.setFull();
+                    }
+                    else
+                    {
+                        this.filebytes = new byte[(int)fileSize];
+                    }
                     
                     // start the server
                     this.server = new Server(this, portNum);
@@ -166,7 +184,7 @@ public class peerProcess {
                     Neighbor priorPeer = new Neighbor(this, pID, hostName, portNum, hasFile);
                     
                     priorPeer.startClient();
-                    messenger.sendMessage(MessageType.BITFIELD, getBitfieldString(), priorPeer.getOutputStream(), priorPeer.getInputStream(), priorPeer.neighborID);
+                    messenger.sendMessage(MessageType.BITFIELD, priorPeer.getOutputStream(), priorPeer.getInputStream(), priorPeer.neighborID, -1);
                     // Add connection to this peers list of connections
                     this.neighbors.add(priorPeer);
                 }
@@ -175,6 +193,9 @@ public class peerProcess {
         }
         catch (FileNotFoundException e) {
             System.out.println("Could not find file");
+        }
+        catch (IOException e){
+            System.out.println("Couldn't read the file");
         }finally{
             if (peerReader != null) {
                 peerReader.close();
@@ -247,7 +268,7 @@ public class peerProcess {
         for(int i = 0; i < prefNeighbor.size(); i++){
             Neighbor current = prefNeighbor.get(i);
             if(current != optUnchoked){
-                messenger.sendMessage(MessageType.CHOKE, null, current.getOutputStream(), current.getInputStream(), current.neighborID);
+                messenger.sendMessage(MessageType.CHOKE, current.getOutputStream(), current.getInputStream(), current.neighborID, -1);
             }
         }
         
@@ -302,7 +323,7 @@ public class peerProcess {
         
         for(int i = 0; i < prefNeighbor.size(); i++){
             Neighbor current = prefNeighbor.get(i);
-            messenger.sendMessage(MessageType.UNCHOKE, null, current.getOutputStream(), current.getInputStream(), current.neighborID);
+            messenger.sendMessage(MessageType.UNCHOKE, current.getOutputStream(), current.getInputStream(), current.neighborID, -1);
         }
         
 
@@ -325,7 +346,7 @@ public class peerProcess {
             logger.changeOptimisticallyUnchokedNeighbors(Integer.toString(optUnchoked.neighborID));
     
             // Send "UNCHOKE" message
-            messenger.sendMessage(MessageType.UNCHOKE, null, optUnchoked.getOutputStream(), optUnchoked.getInputStream(), optUnchoked.neighborID);
+            messenger.sendMessage(MessageType.UNCHOKE, optUnchoked.getOutputStream(), optUnchoked.getInputStream(), optUnchoked.neighborID, -1);
         } else {
             // Handle the case where there are no valid candidates to choose from.
             return;
@@ -334,13 +355,13 @@ public class peerProcess {
 
    
 
-    public boolean receiveMessage(String msg, ObjectOutputStream out, ObjectInputStream in,int connectionID) {
-        messenger.decodeMessage(msg, out, in, connectionID);
+    public boolean receiveMessage(ObjectOutputStream out, ObjectInputStream in,int connectionID) {
+        messenger.decodeMessage(out, in, connectionID);
         return true;
     }
     
-    public boolean sendMessage(MessageType type, String msg, ObjectOutputStream out, ObjectInputStream in, int connectionID) {
-        messenger.sendMessage(type, msg, out, in, connectionID);
+    public boolean sendMessage(MessageType type, ObjectOutputStream out, ObjectInputStream in, int connectionID, int pieceIndex) {
+        messenger.sendMessage(type, out, in, connectionID, pieceIndex);
         return true;
     }
 
@@ -360,12 +381,11 @@ public class peerProcess {
         return this.logger;
     }
 
-    public String getBitfieldString() {
-        String bitfieldString = "";
-        for (int i = 0; i < bitfield.length; i++) {
-            bitfieldString += Integer.toString(bitfield[i]);
-        }
-        return bitfieldString;
-    }
-
+    // public String getBitfieldString() {
+    //     String bitfieldString = "";
+    //     for (int i = 0; i < bitfield.length; i++) {
+    //         bitfieldString += Integer.toString(bitfield[i]);
+    //     }
+    //     return bitfieldString;
+    // }
 }

@@ -10,7 +10,7 @@ public class Neighbor {
     public Client peerClient;
 
     // Bitfield information
-    public int[] neighborBitfield;
+    public Bitfield bitfield;
     
     // State variables
     public boolean themChoked = true; // Are they choked by us (not them to us)
@@ -52,13 +52,13 @@ public class Neighbor {
         this.usInterested = c;
     }
 
-    public void updatePeerBitfield(int[] bitfield) {
-        this.neighborBitfield = bitfield;
+    public void updatePeerBitfield(Bitfield bitfield) {
+        this.bitfield = bitfield;
     }
 
     public void clearBitfield() {
-        for (int i = 0; i < neighborBitfield.length; i++) {
-            neighborBitfield[i] = 0;
+        for (int i = 0; i < bitfield.getSize(); i++) {
+            bitfield.getData()[i] = 0;
         }
     }
 

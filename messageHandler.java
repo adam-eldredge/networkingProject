@@ -18,11 +18,11 @@ public class messageHandler {
     // peerID is who the message came from
     
     // receiving message from peer
-    public void decodeMessage(String msg, ObjectOutputStream out, ObjectInputStream in, int peerID) {
+    public void decodeMessage(ObjectOutputStream out, ObjectInputStream in, int peerID) {
         try {
-            //might be in bits format and needs to be converted into ints
-            int length = Integer.parseInt(msg.substring(0,4));
-            int type = Integer.parseInt(msg.substring(4,5));
+            int length = in.readInt();
+            int type = in.readByte();
+
             MessageType messageType = MessageType.values()[type];
             
             switch (messageType) {
@@ -39,16 +39,16 @@ public class messageHandler {
                     handleUninterested(peerID);
                     break;
                 case HAVE:
-                    handleHave(peerID, length);
+                    handleHave(peerID, in, out);
                     break;
                 case BITFIELD:
-                    handleBitfield(msg.substring(6, 6 + length), peerID);
+                    handleBitfield(peerID, length, in, out);
                     break;
                 case REQUEST:
-                    handleRequest(peerID, length);
+                    handleRequest(peerID, in, out);
                     break;
                 case PIECE:
-                    handlePiece(peerID, length);
+                    handlePiece(peerID, length, in, out);
                     break;
                 default:
                     throw new RuntimeException("Invalid message type");
@@ -85,112 +85,142 @@ public class messageHandler {
         peer.getLogger().receiveNotInterested(Integer.toString(peerID));
     }
 
-    private void handleHave(int peerID, int index, ObjectOutputStream out, ObjectInputStream in) {
-        // Check to see if we have the piece that we have received an index for, if not send an interested message and set us as interested
-        Neighbor neighbor = peer.getPeer(peerID);
+    private void handleHave(int peerID, ObjectInputStream in, ObjectOutputStream out) {
+        try{
+            //Read 4 byte index
+            int index = in.readInt();
 
-        // Update their bitfield
-        neighbor.neighborBitfield[index] = 1;
+            // Check to see if we have the piece that we have received an index for, if not send an interested message and set us as interested
+            Neighbor neighbor = peer.getPeer(peerID);
 
-        // Check to see if we are interested in that piece
-        if (peer.bitfield[index] == 0) {
-            neighbor.setUsInterested(true);
+            // Update their bitfield
+            neighbor.bitfield.getData()[index] = 1;
 
-            // SEND INTERESTED MESSAGE HERE
-            peer.sendMessage(MessageType.INTERESTED, null, out, in, peerID);
+            // Check to see if we are interested in that piece
+            if (peer.bitfield.hasPiece(index)) {
+                neighbor.setUsInterested(true);
+
+                // SEND INTERESTED MESSAGE HERE
+                peer.sendMessage(MessageType.INTERESTED, out, in, peerID, index);
+            }
+
+            peer.getLogger().receiveHave(Integer.toString(peerID), index);
+
+        }catch (IOException e) {
+            System.out.println("Bad index in handleHave");
         }
-
-        peer.getLogger().receiveHave(Integer.toString(peerID), index);
     }
 
-    private void handleBitfield(String peerBitfield, int peerID, ObjectOutputStream out, ObjectInputStream in) {
+    private void handleBitfield(int peerID, int length, ObjectInputStream in, ObjectOutputStream out) {
+        try{
         Neighbor neighbor = peer.getPeer(peerID);
+        byte[] payload = in.readNBytes(length);
 
-        if (peerBitfield.length() == 0) {
-            // Set connections bitfield to empty all zero
-            neighbor.clearBitfield();
-            return;
-        }
-        else {
+        neighbor.bitfield.setData(payload);
+
+        // if (peerBitfield.length() == 0) {
+        //     // Set connections bitfield to empty all zero
+        //     neighbor.clearBitfield();
+        //     return;
+        // }
+        // else {
             int[] receivedBitfield = new int[bitFieldSize];
 
-            for (int i = 0; i < peerBitfield.length(); i++) {
-                receivedBitfield[i] = peerBitfield.charAt(i);
+            for (int i = 0; i < peer.bitfield.getSize(); i++) {
+                receivedBitfield[i] = peer.bitfield.getData()[i];
             }
 
             // We need to compare the two bitfields and keep track of which bits we are interested in
             boolean interested = false;
             for (int i = 0; i < bitFieldSize; i++) {
-                if ((receivedBitfield[i] - peer.bitfield[i]) == 1) {
+                if ((receivedBitfield[i] - peer.bitfield.getData()[i]) == 1) {
                     interested = true;
                 }
             }
 
             if (interested) {
-                peer.sendMessage(MessageType.INTERESTED, null, out, in, peerID);
+                peer.sendMessage(MessageType.INTERESTED, out, in, peerID, -1);
             }
             else {
-                peer.sendMessage(MessageType.UNINTERESTED, null, out, in, peerID);
+                peer.sendMessage(MessageType.UNINTERESTED, out, in, peerID, -1);
             }
+        // }
+        }catch (IOException e) {
+            System.out.println("Bad index in handleHave");
         }
-        return;
     }
 
-    private void handleRequest(int peerID, int index, ObjectOutputStream out, ObjectInputStream in) {
+    private void handleRequest(int peerID, ObjectInputStream in, ObjectOutputStream out) {
         // This function will handle a request message received
         // Make sure we have the peice and send it
-        if (peer.bitfield[index] == 0) return;
-
-        // TODO - WHAT SHOULD THE PAYLOAD BE
-        String payload = "hello";
-
-        peer.sendMessage(MessageType.PIECE, payload, out, in, peerID);
-    }
-
-    private void handlePiece(int peerID, int index, String payload, ObjectOutputStream out, ObjectInputStream in) {
-        // This function will handle a piece message received
-        // Download piece here
-        savePiece(payload, index);
-        
-        // Find number of pieces after download
-        int numPieces = numPieces(peer.bitfield);
-
-        peer.getLogger().downloadPiece(Integer.toString(peerID), index, numPieces);
-
-        //if and only if we have the complete file/all pieces
-        if (fullBitfield(peer.bitfield)) { peer.getLogger().completeDownload(); }
-
-        // Randomly choose another piece that we don't have and havent requested
-        Random rand = new Random();
-        int reqIndex; 
-        do {
-            reqIndex = rand.nextInt(peer.bitFieldSize);
-        } while (peer.bitfield[reqIndex] == 1);
-
-        peer.sendMessage(MessageType.REQUEST, String.valueOf(reqIndex), out, in, peerID);
-    }
-    private boolean fullBitfield(int[] bitfield) {
-        for (int i = 0; i < bitfield.length; i++) {
-            if (bitfield[i] == 0) return false;
+        try {
+            int index = in.readInt();
+            
+            if (peer.bitfield.hasPiece(index)){
+                peer.sendMessage(MessageType.PIECE, out, in, peerID, index);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        return true;
+    }
+        
+        private void handlePiece(int peerID, int length, ObjectInputStream in, ObjectOutputStream out) {
+            // This function will handle a piece message received
+        // Download piece here
+        try {
+            int index = in.readInt();
+            byte[] payload = in.readNBytes(length);
+            savePiece(payload, index);
+
+            // Find number of pieces after download
+            int numPieces = numPieces();
+    
+            peer.getLogger().downloadPiece(Integer.toString(peerID), index, numPieces);
+    
+            //if and only if we have the complete file/all pieces
+            if (fullBitfield()) { peer.getLogger().completeDownload(); }
+    
+            // Randomly choose another piece that we don't have and havent requested
+            Random rand = new Random();
+            int reqIndex; 
+            do {
+                reqIndex = rand.nextInt(peer.bitFieldSize);
+            } while (peer.bitfield.getData()[reqIndex] == 1);
+    
+            peer.sendMessage(MessageType.REQUEST, out, in, peerID, reqIndex);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+      
+        
+    }
+    private boolean fullBitfield() {
+        if (numPieces() == peer.filebytes.length){
+            return true;
+        }
+        else return false;
     }
 
-    private void savePiece(String payload, int index) {
-        // TODO - Save the payload into the correct index here
+    private void savePiece(byte[] payload, int index) {
+        for (int i = index; i < payload.length; i++)
+        {
+            peer.filebytes[i] = payload[i];
+        }
     }
 
-    private int numPieces(int[] bitfield) {
+    private int numPieces() {
         int count = 0;
-        for (int i = 0; i < bitfield.length; i++) {
-            if (bitfield[i] == 1) count ++;
+        for (int i = 0; i < peer.filebytes.length; i++) {
+            if (peer.filebytes[i] != 0) count ++;
         }
 
         return count;
     }
 
     // sending message to peer
-    public void sendMessage(MessageType type, String payload, ObjectOutputStream out, ObjectInputStream in, int peerID, int pieceIndex) {
+    public void sendMessage(MessageType type, ObjectOutputStream out, ObjectInputStream in, int peerID, int pieceIndex) {
         // PeerID is who the message needs to go to
         switch(type) {
             case CHOKE:
@@ -224,42 +254,42 @@ public class messageHandler {
 
     // *** MESSAGE SENDING *** //
     private void sendChoke(ObjectOutputStream out, ObjectInputStream in, int peerID) {
-        String msg = "00010";
         try {
-            out.writeBytes(msg);
+            out.writeInt(0);
+            out.writeByte(0);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
     private void sendUnchoke(ObjectOutputStream out, ObjectInputStream in, int peerID) {
-        String msg = "00011";
         try {
-            out.writeBytes(msg);
+            out.writeInt(0);
+            out.writeByte(1);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
     private void sendInterested(ObjectOutputStream out, ObjectInputStream in, int peerID) {
-        String msg = "00012";
         try {
-            out.writeBytes(msg);
+            out.writeInt(0);
+            out.writeByte(2);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
     private void sendUninterested(ObjectOutputStream out, ObjectInputStream in, int peerID) {
-        String msg = "00013";
         try {
-            out.writeBytes(msg);
+            out.writeInt(0);
+            out.writeByte(3);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     private void sendHave(ObjectOutputStream out, ObjectInputStream in, int peerID, int pieceIndex) {
-        String msg = "00014";
         try {
-            out.writeBytes(msg);
+            out.writeInt(4);
+            out.writeByte(4);
             out.writeInt(pieceIndex);
         } catch (IOException e) {
             e.printStackTrace();
@@ -267,19 +297,19 @@ public class messageHandler {
     }
 
     private void sendBitfield(ObjectOutputStream out, ObjectInputStream in, int peerID) {
-        String msg = "00015";
         try {
-            out.writeBytes(msg);
-            out.writeBytes(peer.getBitfieldString());
+            out.writeInt(peer.bitfield.getSize());
+            out.writeByte(5);
+            out.write(peer.bitfield.getData());
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     private void sendRequest(ObjectOutputStream out, ObjectInputStream in, int peerID, int pieceIndex) {
-        String msg = "00016";
         try {
-            out.writeBytes(msg);
+            out.writeInt(4);
+            out.writeByte(6);
             out.writeInt(pieceIndex);
         } catch (IOException e) {
             e.printStackTrace();
@@ -287,9 +317,10 @@ public class messageHandler {
     }   
 
     private void sendPiece(ObjectOutputStream out, ObjectInputStream in, int peerID, int pieceIndex) {
-        String msg = "00017";
+        int messageLength = 4 + (int) peer.pieceSize;
         try {
-            out.writeBytes(msg);
+            out.writeInt(messageLength);
+            out.writeByte(7);
             out.writeInt(pieceIndex);
             out.write(peer.filebytes, pieceIndex, (int)peer.pieceSize);
         } catch (IOException e) {
