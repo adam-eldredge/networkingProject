@@ -1,6 +1,11 @@
 public class Bitfield {
     private byte[] data;
 
+    public Bitfield(int size) {
+        int byteSize = (size + 7) / 8;
+        this.data = new byte[byteSize];
+    }
+
     public Bitfield(byte[] data){
         this.data = data;
     }
