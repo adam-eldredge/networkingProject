@@ -162,6 +162,7 @@ public class peerProcess {
                     else
                     {
                         this.filebytes = new byte[(int)fileSize];
+                        this.bitfield.setEmpty();
                     }
                     
                     // start the server
@@ -183,11 +184,16 @@ public class peerProcess {
                     // Connect our peer to the other peer
                     Neighbor priorPeer = new Neighbor(this, pID, hostName, portNum, hasFile);
 
-                    priorPeer.startClient();
-                    messenger.sendMessage(MessageType.CHOKE, priorPeer.getOutputStream(), priorPeer.getInputStream(), priorPeer.neighborID, -1);
+                    
                     // Add connection to this peers list of connections
                     this.neighbors.add(priorPeer);
                 }
+            }
+
+            for (int i = 0; i < this.neighbors.size(); i++) {
+                    Neighbor currentPeer = neighbors.elementAt(i);
+                    currentPeer.startClient();
+                    messenger.sendMessage(MessageType.CHOKE, currentPeer.getOutputStream(), currentPeer.getInputStream(), currentPeer.neighborID, -1);
             }
 
         }
@@ -355,8 +361,8 @@ public class peerProcess {
 
    
 
-    public boolean receiveMessage(ObjectOutputStream out, ObjectInputStream in,int connectionID) {
-        messenger.decodeMessage(out, in, connectionID);
+    public boolean receiveMessage(ObjectOutputStream out, ObjectInputStream in, int length, int type, int connectionID) {
+        messenger.decodeMessage(out, in, length, type, connectionID);
         return true;
     }
     

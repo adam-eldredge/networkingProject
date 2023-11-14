@@ -44,7 +44,6 @@ public class Client {
                 //Verify Handshake Response
                 verifyHandshakeResponse(handshakeResponse);
                 System.out.println("Handshake verified.");
-                
 
             }catch(Exception classnot){
                 System.err.println("Data received in unknown format");

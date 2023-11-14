@@ -18,10 +18,10 @@ public class messageHandler {
     // peerID is who the message came from
     
     // receiving message from peer
-    public void decodeMessage(ObjectOutputStream out, ObjectInputStream in, int peerID) {
+    public void decodeMessage(ObjectOutputStream out, ObjectInputStream in, int length, int type, int peerID) {
         try {
-            int length = in.readInt();
-            int type = in.readByte();
+            System.out.println("About to read");
+            
 
             MessageType messageType = MessageType.values()[type];
             
@@ -62,6 +62,7 @@ public class messageHandler {
 
     // *** MESSAGE HANDLING *** //
     private void handleChoke(int peerID) { 
+        System.out.println("Received choke");
         Neighbor neighbor = peer.getPeer(peerID);
         neighbor.setUsChoked(true); 
         peer.getLogger().chokedNeighbor(Integer.toString(peerID));
@@ -255,8 +256,9 @@ public class messageHandler {
     // *** MESSAGE SENDING *** //
     private void sendChoke(ObjectOutputStream out, ObjectInputStream in, int peerID) {
         try {
-            out.writeInt(0);
-            out.writeByte(0);
+            System.out.println("Sending choke");
+            String msg = "Testing";
+            out.writeObject(msg);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -298,6 +300,7 @@ public class messageHandler {
 
     private void sendBitfield(ObjectOutputStream out, ObjectInputStream in, int peerID) {
         try {
+            System.out.println(peer.bitfield.getData());
             out.writeInt(peer.bitfield.getSize());
             out.writeByte(5);
             out.write(peer.bitfield.getData());
