@@ -31,7 +31,7 @@ public class Client {
             out.flush();
             in = new ObjectInputStream(requestSocket.getInputStream());
 
-            try{
+            try{ 
                 sendHandshakeMessage();
 
                 this.peer.getLogger().generateTCPLogSender(Integer.toString(neighborID));

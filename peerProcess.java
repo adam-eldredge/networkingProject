@@ -27,8 +27,8 @@ public class peerProcess {
     Server              server              = null;
     Neighbor            optUnchoked;
     messageHandler      messenger           = new messageHandler(this, bitFieldSize);
-    Vector<Neighbor>  neighbors         = new Vector<>();
-    Vector<Neighbor>  prefNeighbor     = new Vector<>();
+    Vector<Neighbor>    neighbors           = new Vector<>();
+    Vector<Neighbor>    prefNeighbor        = new Vector<>();
     private Timer timer = null;
 
     // add all data exchanged to this hashmap: key = peerID, value = data amount
@@ -153,7 +153,7 @@ public class peerProcess {
                 if (this.ID == pID) {
                     this.portNum = Integer.parseInt(components[2]);
 
-                    // Set the bitfield and read filebytes
+                    // Set the bitfield and read
                     if(Integer.parseInt(components[3]) == 1)
                     {
                         this.filebytes = Files.readAllBytes(Paths.get(this.filename));
@@ -182,9 +182,9 @@ public class peerProcess {
 
                     // Connect our peer to the other peer
                     Neighbor priorPeer = new Neighbor(this, pID, hostName, portNum, hasFile);
-                    
+
                     priorPeer.startClient();
-                    messenger.sendMessage(MessageType.BITFIELD, priorPeer.getOutputStream(), priorPeer.getInputStream(), priorPeer.neighborID, -1);
+                    messenger.sendMessage(MessageType.CHOKE, priorPeer.getOutputStream(), priorPeer.getInputStream(), priorPeer.neighborID, -1);
                     // Add connection to this peers list of connections
                     this.neighbors.add(priorPeer);
                 }

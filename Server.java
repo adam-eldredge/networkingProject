@@ -1,4 +1,7 @@
 import java.net.*;
+
+import javax.print.DocFlavor.STRING;
+
 import java.io.*;
 
 public class Server extends Thread{
@@ -61,7 +64,7 @@ public class Server extends Thread{
                 out.flush();
                 in = new ObjectInputStream(clientSocket.getInputStream());
                 try{
-                    // receive handshake
+                    // receive hansdshake
                     message = (String)in.readObject();
                     String header = message.substring(0,18);
                     String zero = message.substring(18,28); 
@@ -70,7 +73,7 @@ public class Server extends Thread{
                     // send handshake
                     MESSAGE = header + zero + serverPeerIntance.ID;
                     sendMessage(this.MESSAGE);
-
+                    
                     // log connection received
                     serverPeerIntance.getLogger().generateTCPLogReceiver(clientPeerID);
 
