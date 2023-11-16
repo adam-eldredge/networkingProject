@@ -18,20 +18,15 @@ public class Neighbor {
     public boolean themInterested = false;
     public boolean usInterested = false;
 
-    public Neighbor(peerProcess peerProcessIntance,int peerID, String hostName, int portNum, boolean hasFile) {
+    // Messaging Information
+    ObjectInputStream in;
+    ObjectOutputStream out;
+
+    public Neighbor(peerProcess peerProcessIntance, int peerID, boolean hasFile, ObjectInputStream in, ObjectOutputStream out) {
         this.neighborID = peerID;
-        this.hostName = hostName;
-        this.portNum = portNum;
         this.hasFile = hasFile;
-        peerClient = new Client(peerProcessIntance, hostName, portNum, neighborID);
-    }
-
-
-    public void startClient(){
-        peerClient.startConnection();
-    }
-    public void closeClient(){
-        peerClient.closeConnection();
+        this.in = in;
+        this.out = out;
     }
 
     // Setters
@@ -68,9 +63,9 @@ public class Neighbor {
     }
 
     public ObjectOutputStream getOutputStream() {
-        return peerClient.out;
+        return out;
     }
     public ObjectInputStream getInputStream() {
-        return peerClient.in;
+        return in;
     }
 }

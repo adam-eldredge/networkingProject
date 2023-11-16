@@ -28,6 +28,7 @@ public class peerProcess {
     Neighbor            optUnchoked;
     messageHandler      messenger           = new messageHandler(this, bitFieldSize);
     Vector<Neighbor>    neighbors           = new Vector<>();
+    Vector<Client>    clients           = new Vector<>();
     Vector<Neighbor>    prefNeighbor        = new Vector<>();
     private Timer timer = null;
 
@@ -182,17 +183,23 @@ public class peerProcess {
                     boolean hasFile = (Integer.parseInt(components[3]) != 0);
 
                     // Connect our peer to the other peer
-                    Neighbor priorPeer = new Neighbor(this, pID, hostName, portNum, hasFile);
+                    // Neighbor priorPeer = new Neighbor(this, pID, hostName, portNum, hasFile);
 
+                    // Create a new Client for this connection
+                    Client client = new Client(this, hostName, portNum, pID, hasFile);
+                    clients.add(client);
                     
-                    // Add connection to this peers list of connections
-                    this.neighbors.add(priorPeer);
+                    // Add connection to this peers list of connections - CLIENT SHOULD ADD THEM
+                    // this.neighbors.add(priorPeer);
                 }
             }
 
-            for (int i = 0; i < this.neighbors.size(); i++) {
-                    Neighbor currentPeer = neighbors.elementAt(i);
-                    currentPeer.startClient();
+            // Establish TCP connections
+            for (int i = 0; i < clients.size(); i++) {
+                    Client current = clients.elementAt(i);
+                    current.startConnection();
+
+                    Neighbor currentPeer = current.createdNeighbor;
                     messenger.sendMessage(MessageType.BITFIELD, currentPeer.getOutputStream(), currentPeer.getInputStream(), currentPeer.neighborID, -1);
             }
 
@@ -251,10 +258,10 @@ public class peerProcess {
         }
     }
 
-     private void closeNeighborConnections() {
+    private void closeNeighborConnections() {
         // Close all connections
-        for (int i = 0; i < neighbors.size(); i++) {
-            neighbors.get(i).closeClient();
+        for (int i = 0; i < clients.size(); i++) {
+            clients.get(i).closeConnection();
         }
     }
 

@@ -74,6 +74,10 @@ public class Server extends Thread{
                     MESSAGE = header + zero + serverPeerIntance.ID;
                     sendMessage(this.MESSAGE);
 
+                    // Add neighbor here
+                    Neighbor neighbor = new Neighbor(this.serverPeerIntance, this.serverPeerIntance.ID, false, in, out);
+                    this.serverPeerIntance.neighbors.add(neighbor);
+
                     // log connection received
                     serverPeerIntance.getLogger().generateTCPLogReceiver(clientPeerID);
                     

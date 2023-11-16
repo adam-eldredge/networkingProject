@@ -14,13 +14,16 @@ public class Client {
     peerProcess peer; // Parent peer of this client
     String header = "P2PFILESHARINGPROJ";
     String zeros = "0000000000";
+    boolean hasFile = false;
+    Neighbor createdNeighbor;
 
 
-    public Client(peerProcess p, String hostName, int portNum, int connectionID) {
+    public Client(peerProcess p, String hostName, int portNum, int connectionID, boolean hasFile) {
         peer = p;
         this.hostName = hostName;
         this.portNum = portNum;
         this.neighborID = connectionID;
+        this.hasFile = hasFile;
     }
 
     public void startConnection(){
@@ -44,6 +47,11 @@ public class Client {
                 //Verify Handshake Response
                 verifyHandshakeResponse(handshakeResponse);
                 System.out.println("Handshake verified.");
+
+                // Create a new neighbor for this connection
+                Neighbor neighbor = new Neighbor(peer, peer.ID, hasFile, in, out);
+                peer.neighbors.add(neighbor);
+                createdNeighbor = neighbor;
 
             }catch(Exception classnot){
                 System.err.println("Data received in unknown format");
