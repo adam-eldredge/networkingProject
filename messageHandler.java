@@ -114,10 +114,11 @@ public class messageHandler {
 
     private void handleBitfield(int peerID, int length, ObjectInputStream in, ObjectOutputStream out) {
         try{
-        // Neighbor neighbor = peer.getPeer(peerID);
+        Neighbor neighbor = this.peer.getPeer(peerID);
         byte[] payload = in.readNBytes(length);
-        // neighbor.bitfield.setData(payload);
-        Bitfield b = new Bitfield(payload);
+
+        Bitfield neighborBitfield = new Bitfield(payload);
+        neighbor.updatePeerBitfield(neighborBitfield);
         
         // if (peerBitfield.length() == 0) {
         //     // Set connections bitfield to empty all zero
@@ -129,8 +130,9 @@ public class messageHandler {
             // We need to compare the two bitfields and keep track of which bits we are interested in
             boolean interested = false;
             for (int i = 0; i < peer.bitfield.getBitSize(); i++) {
-                if (b.hasPiece(i) && !(peer.bitfield.hasPiece(i))) {
+                if (neighborBitfield.hasPiece(i) && !(peer.bitfield.hasPiece(i))) {
                     interested = true;
+                    break;
                 }
             }
 

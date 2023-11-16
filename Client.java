@@ -49,9 +49,15 @@ public class Client {
                 System.out.println("Handshake verified.");
 
                 // Create a new neighbor for this connection
-                Neighbor neighbor = new Neighbor(peer, peer.ID, hasFile, in, out);
+                Neighbor neighbor = new Neighbor(peer, neighborID, hasFile, in, out);
                 peer.neighbors.add(neighbor);
                 createdNeighbor = neighbor;
+
+                peer.messenger.sendMessage(MessageType.BITFIELD, out, in, neighborID, -1);
+
+                while(true) {
+                    peer.receiveMessage(out, in, neighborID);
+                }
 
             }catch(Exception classnot){
                 System.err.println("Data received in unknown format");

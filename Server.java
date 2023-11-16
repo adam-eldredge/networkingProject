@@ -75,11 +75,14 @@ public class Server extends Thread{
                     sendMessage(this.MESSAGE);
 
                     // Add neighbor here
-                    Neighbor neighbor = new Neighbor(this.serverPeerIntance, this.serverPeerIntance.ID, false, in, out);
+                    Neighbor neighbor = new Neighbor(this.serverPeerIntance, Integer.parseInt(clientPeerID), false, in, out);
                     this.serverPeerIntance.neighbors.add(neighbor);
 
                     // log connection received
                     serverPeerIntance.getLogger().generateTCPLogReceiver(clientPeerID);
+                    
+                    handleBitfield(neighbor, in);
+                    this.serverPeerIntance.messenger.sendMessage(MessageType.BITFIELD, out, in, Integer.parseInt(clientPeerID), -1);
                     
                     // receive stream of messages
                     while(true) {
@@ -117,5 +120,19 @@ public class Server extends Thread{
                 ioException.printStackTrace();
             }
         } 
+        
+        private void handleBitfield(Neighbor neighbor, ObjectInputStream in){
+            try{
+                int length = in.readInt();
+                int type = in.readByte();
+                byte[] payload = in.readNBytes(length);
+    
+                Bitfield neighborBitfield = new Bitfield(payload);
+                neighbor.updatePeerBitfield(neighborBitfield);
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

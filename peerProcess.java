@@ -198,9 +198,6 @@ public class peerProcess {
             for (int i = 0; i < clients.size(); i++) {
                     Client current = clients.elementAt(i);
                     current.startConnection();
-
-                    Neighbor currentPeer = current.createdNeighbor;
-                    messenger.sendMessage(MessageType.BITFIELD, currentPeer.getOutputStream(), currentPeer.getInputStream(), currentPeer.neighborID, -1);
             }
 
         }

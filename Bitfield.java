@@ -5,6 +5,8 @@ public class Bitfield {
     
     public Bitfield(byte[] data){
         this.data = data;
+        this.byteSize = data.length;
+        this.bitSize = data.length * 8;
     }
     
     public Bitfield(int size) {
