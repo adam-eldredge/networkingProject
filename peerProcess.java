@@ -193,7 +193,7 @@ public class peerProcess {
             for (int i = 0; i < this.neighbors.size(); i++) {
                     Neighbor currentPeer = neighbors.elementAt(i);
                     currentPeer.startClient();
-                    messenger.sendMessage(MessageType.CHOKE, currentPeer.getOutputStream(), currentPeer.getInputStream(), currentPeer.neighborID, -1);
+                    messenger.sendMessage(MessageType.BITFIELD, currentPeer.getOutputStream(), currentPeer.getInputStream(), currentPeer.neighborID, -1);
             }
 
         }
@@ -361,8 +361,8 @@ public class peerProcess {
 
    
 
-    public boolean receiveMessage(ObjectOutputStream out, ObjectInputStream in, int length, int type, int connectionID) {
-        messenger.decodeMessage(out, in, length, type, connectionID);
+    public boolean receiveMessage(ObjectOutputStream out, ObjectInputStream in, int connectionID) {
+        messenger.decodeMessage(out, in, connectionID);
         return true;
     }
     

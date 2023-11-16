@@ -1,15 +1,16 @@
 public class Bitfield {
     private byte[] data;
-    private int size;
+    private int byteSize;
+    private int bitSize;
     
     public Bitfield(byte[] data){
         this.data = data;
     }
     
     public Bitfield(int size) {
-        int byteSize = (size + 7) / 8;
-        this.size = byteSize;
-        this.data = new byte[byteSize];
+        this.bitSize = size;
+        this.byteSize = (size + 7) / 8;
+        this.data = new byte[this.byteSize];
     }
     
     public byte[] getData() {
@@ -20,22 +21,30 @@ public class Bitfield {
         this.data = data;
     }
     
-    public int getSize() {
-        return size;
+    public int getByteSize() {
+        return this.byteSize;
     }
     
-    public void setSize(int size) {
-        this.size = size;
+    public void setByteSize(int byteSize) {
+        this.byteSize = byteSize;
+    }
+
+    public int getBitSize(){
+        return this.bitSize;
+    }
+
+    public void setBitSize(int bitSize) {
+        this.bitSize = bitSize;
     }
     
     public void setFull(){
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < byteSize; i++) {
             data[i] = Byte.MAX_VALUE;
         }
     }
 
     public void setEmpty(){
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < byteSize; i++) {
             data[i] = 0;
         }
     }

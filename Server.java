@@ -73,20 +73,13 @@ public class Server extends Thread{
                     // send handshake
                     MESSAGE = header + zero + serverPeerIntance.ID;
                     sendMessage(this.MESSAGE);
-                    
+
                     // log connection received
                     serverPeerIntance.getLogger().generateTCPLogReceiver(clientPeerID);
-
+                    
                     // receive stream of messages
                     while(true) {
-                        System.out.println("waiting for a message");
-                        int length = 5;
-                        int type = 5;
-                        String message = (String) in.readObject();
-                        System.out.println(length);
-                        System.out.println(type);
-                        System.out.println(message);
-                        serverPeerIntance.receiveMessage(out, in, length, type, Integer.parseInt(clientPeerID));
+                        serverPeerIntance.receiveMessage(out, in, Integer.parseInt(clientPeerID));
                     }
                 }
                 catch(Exception classnot){

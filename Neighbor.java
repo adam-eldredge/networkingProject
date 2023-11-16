@@ -57,7 +57,7 @@ public class Neighbor {
     }
 
     public void clearBitfield() {
-        for (int i = 0; i < bitfield.getSize(); i++) {
+        for (int i = 0; i < bitfield.getByteSize(); i++) {
             bitfield.getData()[i] = 0;
         }
     }

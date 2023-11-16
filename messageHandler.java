@@ -18,10 +18,10 @@ public class messageHandler {
     // peerID is who the message came from
     
     // receiving message from peer
-    public void decodeMessage(ObjectOutputStream out, ObjectInputStream in, int length, int type, int peerID) {
+    public void decodeMessage(ObjectOutputStream out, ObjectInputStream in, int peerID) {
         try {
-            System.out.println("About to read");
-            
+            int length = in.readInt();
+            int type = in.readByte();
 
             MessageType messageType = MessageType.values()[type];
             
@@ -114,27 +114,22 @@ public class messageHandler {
 
     private void handleBitfield(int peerID, int length, ObjectInputStream in, ObjectOutputStream out) {
         try{
-        Neighbor neighbor = peer.getPeer(peerID);
+        // Neighbor neighbor = peer.getPeer(peerID);
         byte[] payload = in.readNBytes(length);
-
-        neighbor.bitfield.setData(payload);
-
+        // neighbor.bitfield.setData(payload);
+        Bitfield b = new Bitfield(payload);
+        
         // if (peerBitfield.length() == 0) {
         //     // Set connections bitfield to empty all zero
         //     neighbor.clearBitfield();
         //     return;
         // }
         // else {
-            int[] receivedBitfield = new int[bitFieldSize];
-
-            for (int i = 0; i < peer.bitfield.getSize(); i++) {
-                receivedBitfield[i] = peer.bitfield.getData()[i];
-            }
 
             // We need to compare the two bitfields and keep track of which bits we are interested in
             boolean interested = false;
-            for (int i = 0; i < bitFieldSize; i++) {
-                if ((receivedBitfield[i] - peer.bitfield.getData()[i]) == 1) {
+            for (int i = 0; i < peer.bitfield.getBitSize(); i++) {
+                if (b.hasPiece(i) && !(peer.bitfield.hasPiece(i))) {
                     interested = true;
                 }
             }
@@ -256,9 +251,11 @@ public class messageHandler {
     // *** MESSAGE SENDING *** //
     private void sendChoke(ObjectOutputStream out, ObjectInputStream in, int peerID) {
         try {
-            System.out.println("Sending choke");
+            // System.out.println("Sending choke");
             String msg = "Testing";
-            out.writeObject(msg);
+            out.writeInt(0);
+            out.writeByte(0);
+            out.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -267,6 +264,7 @@ public class messageHandler {
         try {
             out.writeInt(0);
             out.writeByte(1);
+            out.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -275,6 +273,7 @@ public class messageHandler {
         try {
             out.writeInt(0);
             out.writeByte(2);
+            out.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -283,6 +282,7 @@ public class messageHandler {
         try {
             out.writeInt(0);
             out.writeByte(3);
+            out.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -293,6 +293,7 @@ public class messageHandler {
             out.writeInt(4);
             out.writeByte(4);
             out.writeInt(pieceIndex);
+            out.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }       
@@ -300,10 +301,10 @@ public class messageHandler {
 
     private void sendBitfield(ObjectOutputStream out, ObjectInputStream in, int peerID) {
         try {
-            System.out.println(peer.bitfield.getData());
-            out.writeInt(peer.bitfield.getSize());
+            out.writeInt(peer.bitfield.getByteSize());
             out.writeByte(5);
             out.write(peer.bitfield.getData());
+            out.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -314,6 +315,7 @@ public class messageHandler {
             out.writeInt(4);
             out.writeByte(6);
             out.writeInt(pieceIndex);
+            out.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }       
@@ -326,6 +328,7 @@ public class messageHandler {
             out.writeByte(7);
             out.writeInt(pieceIndex);
             out.write(peer.filebytes, pieceIndex, (int)peer.pieceSize);
+            out.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }       
