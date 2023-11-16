@@ -159,6 +159,7 @@ public class peerProcess {
                     {
                         this.filebytes = Files.readAllBytes(Paths.get(this.filename));
                         this.bitfield.setFull();
+                        fileCompleted = true;
                     }
                     else
                     {
@@ -200,7 +201,17 @@ public class peerProcess {
                     current.startConnection();
 
                     Neighbor currentPeer = current.createdNeighbor;
-                    messenger.sendMessage(MessageType.BITFIELD, currentPeer.getOutputStream(), currentPeer.getInputStream(), currentPeer.neighborID, -1);
+
+                    // We might need to make Client a thread
+
+                    // Send bitfield
+                    sendMessage(MessageType.BITFIELD, currentPeer.getOutputStream(), currentPeer.getInputStream(), currentPeer.neighborID, -1);
+
+                    // receive interested message
+                    receiveMessage(currentPeer.getOutputStream(), currentPeer.getInputStream(), currentPeer.neighborID);
+
+                    //receive bitfield
+                    receiveMessage(currentPeer.getOutputStream(), currentPeer.getInputStream(), currentPeer.neighborID);
             }
 
         }
@@ -336,7 +347,8 @@ public class peerProcess {
         
         for(int i = 0; i < prefNeighbor.size(); i++){
             Neighbor current = prefNeighbor.get(i);
-            messenger.sendMessage(MessageType.UNCHOKE, current.getOutputStream(), current.getInputStream(), current.neighborID, -1);
+            sendMessage(MessageType.UNCHOKE, current.getOutputStream(), current.getInputStream(), current.neighborID, -1);
+            receiveMessage(current.getOutputStream(), current.getInputStream(), current.neighborID);
         }
         
 

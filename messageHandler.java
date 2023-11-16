@@ -24,6 +24,8 @@ public class messageHandler {
             int type = in.readByte();
 
             MessageType messageType = MessageType.values()[type];
+
+            System.out.println("Received message type: " + messageType);
             
             switch (messageType) {
                 case CHOKE:
@@ -69,20 +71,31 @@ public class messageHandler {
     }
 
     private void handleUnchoke(int peerID) {
+        System.out.println("Received unchoke");
         Neighbor neighbor = peer.getPeer(peerID);
         neighbor.setUsChoked(false);
         peer.getLogger().unchokedNeighbor(Integer.toString(peerID));
+        
+        // add code to request piece
+        peer.sendMessage(MessageType.REQUEST, neighbor.getOutputStream(), neighbor.getInputStream(), peerID, -1);
     }
 
     private void handleInterested(int peerID) {
+        // its theminterested not usinterested I think
+        System.out.println("Received interested");
+        System.out.println(peerID);
         Neighbor neighbor = peer.getPeer(peerID);
-        neighbor.setUsInterested(true);
+        // neighbor.setUsInterested(true);
+        neighbor.setThemInterested(true);
         peer.getLogger().receiveInterested(Integer.toString(peerID));
     }
 
     private void handleUninterested(int peerID) {
+        System.out.println("Received uninterested");
+        System.out.println(peerID);
         Neighbor neighbor = peer.getPeer(peerID);
-        neighbor.setUsInterested(false);
+        // neighbor.setUsInterested(false);
+        neighbor.setThemInterested(false);
         peer.getLogger().receiveNotInterested(Integer.toString(peerID));
     }
 
@@ -133,6 +146,8 @@ public class messageHandler {
                     interested = true;
                 }
             }
+            // why is the piece index -1?
+            System.out.println("Sending interested: " + interested);
 
             if (interested) {
                 peer.sendMessage(MessageType.INTERESTED, out, in, peerID, -1);
@@ -140,6 +155,9 @@ public class messageHandler {
             else {
                 peer.sendMessage(MessageType.UNINTERESTED, out, in, peerID, -1);
             }
+
+
+            // We have to send our bitfield back
         // }
         }catch (IOException e) {
             System.out.println("Bad index in handleHave");
@@ -160,7 +178,7 @@ public class messageHandler {
         }
     }
         
-        private void handlePiece(int peerID, int length, ObjectInputStream in, ObjectOutputStream out) {
+    private void handlePiece(int peerID, int length, ObjectInputStream in, ObjectOutputStream out) {
             // This function will handle a piece message received
         // Download piece here
         try {
@@ -262,6 +280,7 @@ public class messageHandler {
     }
     private void sendUnchoke(ObjectOutputStream out, ObjectInputStream in, int peerID) {
         try {
+            System.out.println("Sending unchoke");
             out.writeInt(0);
             out.writeByte(1);
             out.flush();
@@ -271,6 +290,7 @@ public class messageHandler {
     }
     private void sendInterested(ObjectOutputStream out, ObjectInputStream in, int peerID) {
         try {
+            System.out.println("Sending interested");
             out.writeInt(0);
             out.writeByte(2);
             out.flush();
@@ -280,6 +300,7 @@ public class messageHandler {
     }
     private void sendUninterested(ObjectOutputStream out, ObjectInputStream in, int peerID) {
         try {
+            System.out.println("Sending uninterested");
             out.writeInt(0);
             out.writeByte(3);
             out.flush();
