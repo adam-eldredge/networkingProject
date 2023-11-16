@@ -200,18 +200,20 @@ public class peerProcess {
                     Client current = clients.elementAt(i);
                     current.startConnection();
 
-                    Neighbor currentPeer = current.createdNeighbor;
+                    // Neighbor currentPeer = current.createdNeighbor;
 
                     // We might need to make Client a thread
 
-                    // Send bitfield
-                    sendMessage(MessageType.BITFIELD, currentPeer.getOutputStream(), currentPeer.getInputStream(), currentPeer.neighborID, -1);
+                    // // Send bitfield
+                    // sendMessage(MessageType.BITFIELD, currentPeer.getOutputStream(), currentPeer.getInputStream(), currentPeer.neighborID, -1);
 
-                    // receive interested message
-                    receiveMessage(currentPeer.getOutputStream(), currentPeer.getInputStream(), currentPeer.neighborID);
+                    // // receive interested message
+                    // receiveMessage(currentPeer.getOutputStream(), currentPeer.getInputStream(), currentPeer.neighborID);
 
-                    //receive bitfield
-                    receiveMessage(currentPeer.getOutputStream(), currentPeer.getInputStream(), currentPeer.neighborID);
+                    // //receive bitfield
+                    // receiveMessage(currentPeer.getOutputStream(), currentPeer.getInputStream(), currentPeer.neighborID);
+
+                    //
             }
 
         }

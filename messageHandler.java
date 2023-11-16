@@ -167,6 +167,7 @@ public class messageHandler {
     private void handleRequest(int peerID, ObjectInputStream in, ObjectOutputStream out) {
         // This function will handle a request message received
         // Make sure we have the peice and send it
+        System.out.println("Received request Message");
         try {
             int index = in.readInt();
             
@@ -322,6 +323,7 @@ public class messageHandler {
 
     private void sendBitfield(ObjectOutputStream out, ObjectInputStream in, int peerID) {
         try {
+            System.out.println("Sending bitfield");
             out.writeInt(peer.bitfield.getByteSize());
             out.writeByte(5);
             out.write(peer.bitfield.getData());
@@ -333,6 +335,7 @@ public class messageHandler {
 
     private void sendRequest(ObjectOutputStream out, ObjectInputStream in, int peerID, int pieceIndex) {
         try {
+            System.out.println("Sending request");
             out.writeInt(4);
             out.writeByte(6);
             out.writeInt(pieceIndex);

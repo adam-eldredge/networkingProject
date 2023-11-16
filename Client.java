@@ -1,7 +1,7 @@
 import java.net.*;
 import java.io.*;
 
-public class Client {
+public class Client extends Thread {
 
     Socket requestSocket; //socket connect to the server
     ObjectOutputStream out; //stream write to the socket
@@ -52,6 +52,17 @@ public class Client {
                 Neighbor neighbor = new Neighbor(peer, peer.ID, hasFile, in, out);
                 peer.neighbors.add(neighbor);
                 createdNeighbor = neighbor;
+                
+                // Send bitfield
+                peer.sendMessage(MessageType.BITFIELD, createdNeighbor.getOutputStream(), createdNeighbor.getInputStream(), createdNeighbor.neighborID, -1);
+                
+                while(true){
+                    peer.receiveMessage(createdNeighbor.getOutputStream(), createdNeighbor.getInputStream(), createdNeighbor.neighborID);    
+                }
+                // // receive interested message
+                // peer.receiveMessage(createdNeighbor.getOutputStream(), createdNeighbor.getInputStream(), createdNeighbor.neighborID);
+                // //receive bitfield
+                // peer.receiveMessage(createdNeighbor.getOutputStream(), createdNeighbor.getInputStream(), createdNeighbor.neighborID);
 
             }catch(Exception classnot){
                 System.err.println("Data received in unknown format");
