@@ -38,74 +38,60 @@ public class Server extends Thread{
         }
     }
 
+
     /**
     * A handler thread class. Handlers are spawned from the listening
     * loop and are responsible for dealing with a single client's requests.
     */
 
-    private static class Handler extends Thread {
-        private Socket clientSocket;
-        private ObjectInputStream in; //stream read from the socket
-        private ObjectOutputStream out; //stream write to the socket
+    private static class Handler extends Connection {
+
         private String message; //message received from the client
         private String MESSAGE; //uppercase message send to the client
         private String clientPeerID;
         private peerProcess serverPeerIntance; // Parent peer of the server
 
         public Handler(Socket clientSocket, peerProcess serverPeer) {
-            this.clientSocket = clientSocket;
+            super(clientSocket);
             this.serverPeerIntance = serverPeer;
         }
 
+        @Override
         public void run() {
             try{
-                //initialize Input and Output streams
-                out = new ObjectOutputStream(clientSocket.getOutputStream());
-                out.flush();
-                in = new ObjectInputStream(clientSocket.getInputStream());
-                try{
-                    // receive hansdshake
-                    message = (String)in.readObject();
-                    String header = message.substring(0,18);
-                    String zero = message.substring(18,28); 
-                    clientPeerID = message.substring(28, 32);
-
-                    // send handshake
-                    MESSAGE = header + zero + serverPeerIntance.ID;
-                    sendMessage(this.MESSAGE);
-
-                    // Add neighbor here
-                    Neighbor neighbor = new Neighbor(this.serverPeerIntance, Integer.valueOf(clientPeerID), false, in, out);
-                    this.serverPeerIntance.neighbors.add(neighbor);
-
-                    // log connection received
-                    serverPeerIntance.getLogger().generateTCPLogReceiver(clientPeerID);
-                    
-                    // Recieve bitfield
+                // receive hansdshake
+                message = (String)in.readObject();
+                String header = message.substring(0,18);
+                String zero = message.substring(18,28); 
+                clientPeerID = message.substring(28, 32);
+                // send handshake
+                MESSAGE = header + zero + serverPeerIntance.ID;
+                sendMessage(this.MESSAGE);
+                // Add neighbor here
+                Neighbor neighbor = new Neighbor(this, Integer.valueOf(clientPeerID), false, ConnectionType.SERVER);
+                this.serverPeerIntance.neighbors.add(neighbor);
+                // log connection received
+                serverPeerIntance.getLogger().generateTCPLogReceiver(clientPeerID);
+                
+                // Recieve bitfield
+                serverPeerIntance.receiveMessage(out, in, Integer.parseInt(clientPeerID));
+                // send bitfield
+                //MessageType type, ObjectOutputStream out, ObjectInputStream in, int connectionID, int pieceIndex
+                serverPeerIntance.sendMessage(MessageType.BITFIELD, out, in,  Integer.parseInt(clientPeerID), -1);
+                // receive stream of messages
+                while(true) {
                     serverPeerIntance.receiveMessage(out, in, Integer.parseInt(clientPeerID));
-
-                    // send bitfield
-                    //MessageType type, ObjectOutputStream out, ObjectInputStream in, int connectionID, int pieceIndex
-                    serverPeerIntance.sendMessage(MessageType.BITFIELD, out, in,  Integer.parseInt(clientPeerID), -1);
-
-                    // receive stream of messages
-                    while(true) {
-                        serverPeerIntance.receiveMessage(out, in, Integer.parseInt(clientPeerID));
-                    }
-                }
-                catch(Exception classnot){
-                    System.err.println("Data received in unknown format");
                 }
             }
-            catch(IOException ioException){
-                System.out.println("Disconnect with Client " + clientPeerID);
+            catch(Exception classnot){
+                System.err.println("Data received in unknown format");
             }
             finally{
                 //Close connections
                 try{
                     in.close();
                     out.close();
-                    clientSocket.close();
+                    socket.close();
                 }
                 catch(IOException ioException){
                     System.out.println("Disconnect with Client " + clientPeerID);
@@ -113,16 +99,5 @@ public class Server extends Thread{
             }
         }
 
-        //send a message to the output stream
-        private void sendMessage(String msg) {
-            try{
-                out.writeObject(msg);
-                out.flush();
-                System.out.println("Send message: " + msg + " to Client " + this.clientPeerID);
-            }
-            catch(IOException ioException){
-                ioException.printStackTrace();
-            }
-        } 
     }
 }

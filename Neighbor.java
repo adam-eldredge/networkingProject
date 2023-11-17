@@ -7,45 +7,27 @@ public class Neighbor {
     public String hostName;
     public int portNum;
     public boolean hasFile;
-    public Client peerClient;
-
-    // Bitfield information
+    public Connection socketConnection;
+    public ConnectionType type;
     public Bitfield bitfield;
-    
-    // State variables
-    public boolean themChoked = true; // Are they choked by us (not them to us)
-    public boolean usChoked = false; // Are we choked by them (not them to us)
-    public boolean themInterested = false;
-    public boolean usInterested = false;
+    private boolean choked = true; 
+    private boolean Interested = false;
 
-    // Messaging Information
-    ObjectInputStream in;
-    ObjectOutputStream out;
-
-    public Neighbor(peerProcess peerProcessIntance, int peerID, boolean hasFile, ObjectInputStream in, ObjectOutputStream out) {
+    public Neighbor(Connection connection, int peerID, boolean hasFile, ConnectionType type) {
+        this.socketConnection = connection;
         this.neighborID = peerID;
         this.hasFile = hasFile;
-        this.in = in;
-        this.out = out;
+        this.type = type;
     }
 
     // Setters
-
-    public void setThemChoked(boolean c) {
-        this.themChoked = c;
+    public void setChoked(boolean c) {
+        this.choked = c;
+    }
+    public void setInterested(boolean c) {
+        this.Interested = c;
     }
 
-    public void setUsChoked(boolean c) {
-        this.usChoked = c;
-    }
-
-    public void setThemInterested(boolean c) {
-        this.themInterested = c;
-    }
-
-    public void setUsInterested(boolean c) {
-        this.usInterested = c;
-    }
 
     public void updatePeerBitfield(Bitfield bitfield) {
         this.bitfield = bitfield;
@@ -58,14 +40,19 @@ public class Neighbor {
     }
 
     // Getters
-    public Client getClient() {
-        return peerClient;
+    public Connection getConnection() {
+        return socketConnection;
     }
-
     public ObjectOutputStream getOutputStream() {
-        return out;
+        return socketConnection.getOutputStream();
     }
     public ObjectInputStream getInputStream() {
-        return in;
+        return socketConnection.getInputStream();
+    }
+    public boolean getChoked() {
+        return choked;
+    }
+    public boolean getInterested() {
+        return Interested;
     }
 }

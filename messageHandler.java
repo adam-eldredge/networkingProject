@@ -66,14 +66,14 @@ public class messageHandler {
     private void handleChoke(int peerID) { 
         System.out.println("Received choke");
         Neighbor neighbor = peer.getPeer(peerID);
-        neighbor.setUsChoked(true); 
+        neighbor.setChoked(true); 
         peer.getLogger().chokedNeighbor(Integer.toString(peerID));
     }
 
     private void handleUnchoke(int peerID) {
         System.out.println("Received unchoke");
         Neighbor neighbor = peer.getPeer(peerID);
-        neighbor.setUsChoked(false);
+        neighbor.setChoked(false);
         peer.getLogger().unchokedNeighbor(Integer.toString(peerID));
         
         // add code to request piece
@@ -86,7 +86,7 @@ public class messageHandler {
         System.out.println(peerID);
         Neighbor neighbor = peer.getPeer(peerID);
         // neighbor.setUsInterested(true);
-        neighbor.setThemInterested(true);
+        neighbor.setInterested(true);
         peer.getLogger().receiveInterested(Integer.toString(peerID));
     }
 
@@ -95,7 +95,7 @@ public class messageHandler {
         System.out.println(peerID);
         Neighbor neighbor = peer.getPeer(peerID);
         // neighbor.setUsInterested(false);
-        neighbor.setThemInterested(false);
+        neighbor.setInterested(false);
         peer.getLogger().receiveNotInterested(Integer.toString(peerID));
     }
 
@@ -112,7 +112,7 @@ public class messageHandler {
 
             // Check to see if we are interested in that piece
             if (peer.bitfield.hasPiece(index)) {
-                neighbor.setUsInterested(true);
+                // neighbor.setUsInterested(true);
 
                 // SEND INTERESTED MESSAGE HERE
                 peer.sendMessage(MessageType.INTERESTED, out, in, peerID, index);

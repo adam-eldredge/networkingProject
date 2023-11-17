@@ -28,7 +28,6 @@ public class peerProcess {
     Neighbor            optUnchoked;
     messageHandler      messenger           = new messageHandler(this, bitFieldSize);
     volatile Vector<Neighbor>    neighbors           = new Vector<>();
-    Vector<Client>    clients           = new Vector<>();
     Vector<Neighbor>    prefNeighbor        = new Vector<>();
     private Timer timer = null;
 
@@ -148,9 +147,9 @@ public class peerProcess {
             while (peerReader.hasNextLine()) {
                 String peerLine = peerReader.nextLine();
                 String[] components = peerLine.split(" ");
-
                 // Check the host ID
                 int pID = Integer.parseInt(components[0]);
+
                 if (this.ID == pID) {
                     this.portNum = Integer.parseInt(components[2]);
 
@@ -183,37 +182,17 @@ public class peerProcess {
                     int portNum = Integer.parseInt(components[2]);
                     boolean hasFile = (Integer.parseInt(components[3]) != 0);
 
-                    // Connect our peer to the other peer
-                    // Neighbor priorPeer = new Neighbor(this, pID, hostName, portNum, hasFile);
-
                     // Create a new Client for this connection
-                    Client client = new Client(this, hostName, portNum, pID, hasFile);
-                    clients.add(client);
-                    
-                    // Add connection to this peers list of connections - CLIENT SHOULD ADD THEM
-                    // this.neighbors.add(priorPeer);
+                    new Client(this, hostName, portNum, pID, hasFile);
+                
                 }
             }
 
-            // Establish TCP connections
-            for (int i = 0; i < clients.size(); i++) {
-                    Client current = clients.elementAt(i);
-                    current.startConnection();
-
-                    // Neighbor currentPeer = current.createdNeighbor;
-
-                    // We might need to make Client a thread
-
-                    // // Send bitfield
-                    // sendMessage(MessageType.BITFIELD, currentPeer.getOutputStream(), currentPeer.getInputStream(), currentPeer.neighborID, -1);
-
-                    // // receive interested message
-                    // receiveMessage(currentPeer.getOutputStream(), currentPeer.getInputStream(), currentPeer.neighborID);
-
-                    // //receive bitfield
-                    // receiveMessage(currentPeer.getOutputStream(), currentPeer.getInputStream(), currentPeer.neighborID);
-
-                    //
+            for (int i = 0; i < neighbors.size(); i++) {
+                Neighbor currentNeighbor = neighbors.get(i);
+                if(currentNeighbor.type == ConnectionType.CLIENT){
+                    currentNeighbor.getConnection().start();
+                }
             }
 
         }
@@ -273,8 +252,9 @@ public class peerProcess {
 
     private void closeNeighborConnections() {
         // Close all connections
-        for (int i = 0; i < clients.size(); i++) {
-            clients.get(i).closeConnection();
+        for (int i = 0; i < neighbors.size(); i++) {
+            Neighbor currentNeighbor = neighbors.get(i);
+            currentNeighbor.getConnection().closeConnection();
         }
     }
 
@@ -309,7 +289,7 @@ public class peerProcess {
             // get k random neighbors
             for (int i = 0; i < neighbors.size(); i++) {
                 Neighbor current = neighbors.get(i);
-                if (current.themInterested && count != 0) {
+                if (current.getInterested() && count != 0) {
                     prefNeighbor.add(current);
                     listOfPrefNeighbors.add(Integer.toString(current.neighborID));
                     count--;
@@ -322,7 +302,7 @@ public class peerProcess {
             for (int i = 0; i < neighbors.size(); i++) {
                 Neighbor current = neighbors.get(i);
                 int dataAmount = 0;
-                if (current.themInterested) {
+                if (current.getInterested()) {
 
                     if(connectionsPrevIntervalDataAmount.containsKey(current.neighborID)){
                         dataAmount = connectionsPrevIntervalDataAmount.get(current.neighborID);
@@ -366,7 +346,7 @@ public class peerProcess {
         Random rand = new Random();
         for (int i = 0; i < neighbors.size(); i++) {
             Neighbor current = neighbors.get(i);
-            if (current.themInterested && current.themChoked) {
+            if (current.getInterested() && current.getChoked()) {
                 candidatePool.add(current);
             }
         }
