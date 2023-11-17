@@ -1,6 +1,5 @@
 import java.net.*;
 
-import javax.print.DocFlavor.STRING;
 
 import java.io.*;
 

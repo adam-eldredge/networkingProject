@@ -19,17 +19,19 @@ import java.nio.file.Files;
 public class peerProcess {
     
     // Peer variables
-    int                 ID;
-    int                 bitFieldSize        = 16;
-    int                 portNum;
-    Bitfield            bitfield;
-    byte[]              filebytes;
-    Server              server              = null;
-    Neighbor            optUnchoked;
-    messageHandler      messenger           = new messageHandler(this, bitFieldSize);
-    volatile Vector<Neighbor>    neighbors           = new Vector<>();
-    Vector<Neighbor>    prefNeighbor        = new Vector<>();
+    int ID;
+    int bitFieldSize;
+    int portNum;
+    Bitfield bitfield;
+    byte[] filebytes;
+    Server server = null;
+    Neighbor optUnchoked;
+    messageHandler messenger = new messageHandler(this, bitFieldSize);
+    volatile Vector<Neighbor> neighbors = new Vector<>();
+    Vector<Neighbor> prefNeighbor = new Vector<>();
     private Timer timer = null;
+    Vector<Integer> requestedIndices = new Vector<>();
+    
 
     // add all data exchanged to this hashmap: key = peerID, value = data amount
     HashMap<Integer, Integer> connectionsPrevIntervalDataAmount = new HashMap<>();
@@ -129,7 +131,11 @@ public class peerProcess {
             commonReader.next();
             this.pieceSize = Long.parseLong(commonReader.next());
 
-            this.bitfield = new Bitfield((int)fileSize/(int)pieceSize);
+            int size = (int)fileSize/(int)pieceSize;
+
+            if ((int)fileSize % (int)pieceSize != 0) {size++;}
+            this.bitFieldSize = size;
+            this.bitfield = new Bitfield(size);
         }
         catch (FileNotFoundException e) { 
             System.out.println("Could not find file");
@@ -382,12 +388,16 @@ public class peerProcess {
     // Getters
 
     public Neighbor getPeer(int peerID) {
+        System.out.println(neighbors.size());
         for (int i = 0; i < neighbors.size(); i++) {
-            if (neighbors.get(i).neighborID == peerID) {
+            System.out.println("Comparing neighbor ID: " + neighbors.elementAt(i).neighborID + " with peerID: " + peerID);
+            if (neighbors.elementAt(i).neighborID == peerID) {
+                
                 return neighbors.get(i);
             }
         }
 
+        System.out.println("Did not find a neighbor using the getPeer method");
         return null;
     }
 

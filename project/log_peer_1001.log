@@ -1,8 +1,10 @@
-[2023-11-16 13:57:27]: Peer 1001 has the preferred neighbors [].
+[2023-11-17 17:41:06]: Peer 1001 has the preferred neighbors [].
  
-[2023-11-16 13:57:31]: Peer 1001 is connected from Peer [1002].
+[2023-11-17 17:41:10]: Peer 1001 is connected from Peer [1002].
  
-[2023-11-16 13:57:32]: Peer 1001 has the preferred neighbors [].
+[2023-11-17 17:41:10]: Peer 1001 received the 'interested' message from [1002].
  
-[2023-11-16 13:57:36]: Peer 1001 is connected from Peer [1003].
+[2023-11-17 17:41:11]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-17 17:41:11]: Peer 1001 received the 'interested' message from [1002].
  

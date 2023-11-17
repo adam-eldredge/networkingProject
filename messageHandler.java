@@ -20,6 +20,7 @@ public class messageHandler {
     // receiving message from peer
     public void decodeMessage(ObjectOutputStream out, ObjectInputStream in, int peerID) {
         try {
+            System.out.println("Before length");
             int length = in.readInt();
             int type = in.readByte();
 
@@ -64,57 +65,45 @@ public class messageHandler {
 
     // *** MESSAGE HANDLING *** //
     private void handleChoke(int peerID) { 
-        System.out.println("Received choke");
         Neighbor neighbor = peer.getPeer(peerID);
         neighbor.setChoked(true); 
         peer.getLogger().chokedNeighbor(Integer.toString(peerID));
     }
 
     private void handleUnchoke(int peerID) {
-        System.out.println("Received unchoke");
         Neighbor neighbor = peer.getPeer(peerID);
         neighbor.setChoked(false);
         peer.getLogger().unchokedNeighbor(Integer.toString(peerID));
         
-        // add code to request piece
-        peer.sendMessage(MessageType.REQUEST, neighbor.getOutputStream(), neighbor.getInputStream(), peerID, -1);
+        // Get random index to request
+        int reqPiece = randomRequestIndex();
+
+        // Send request
+        peer.sendMessage(MessageType.REQUEST, neighbor.getOutputStream(), neighbor.getInputStream(), peerID, reqPiece);
     }
 
     private void handleInterested(int peerID) {
-        // its theminterested not usinterested I think
-        System.out.println("Received interested");
-        System.out.println(peerID);
         Neighbor neighbor = peer.getPeer(peerID);
-        // neighbor.setUsInterested(true);
         neighbor.setInterested(true);
         peer.getLogger().receiveInterested(Integer.toString(peerID));
     }
 
     private void handleUninterested(int peerID) {
-        System.out.println("Received uninterested");
-        System.out.println(peerID);
         Neighbor neighbor = peer.getPeer(peerID);
-        // neighbor.setUsInterested(false);
         neighbor.setInterested(false);
         peer.getLogger().receiveNotInterested(Integer.toString(peerID));
     }
 
     private void handleHave(int peerID, ObjectInputStream in, ObjectOutputStream out) {
         try{
-            //Read 4 byte index
-            int index = in.readInt();
-
-            // Check to see if we have the piece that we have received an index for, if not send an interested message and set us as interested
             Neighbor neighbor = peer.getPeer(peerID);
 
-            // Update their bitfield
+            int index = in.readInt();
             neighbor.bitfield.getData()[index] = 1;
 
             // Check to see if we are interested in that piece
             if (peer.bitfield.hasPiece(index)) {
-                // neighbor.setUsInterested(true);
-
-                // SEND INTERESTED MESSAGE HERE
+                neighbor.setInterested(true);
                 peer.sendMessage(MessageType.INTERESTED, out, in, peerID, index);
             }
 
@@ -147,7 +136,6 @@ public class messageHandler {
                 }
             }
             // why is the piece index -1?
-            System.out.println("Sending interested: " + interested);
 
             if (interested) {
                 peer.sendMessage(MessageType.INTERESTED, out, in, peerID, -1);
@@ -182,6 +170,7 @@ public class messageHandler {
     private void handlePiece(int peerID, int length, ObjectInputStream in, ObjectOutputStream out) {
             // This function will handle a piece message received
         // Download piece here
+        System.out.println("Received piece");
         try {
             int index = in.readInt();
             byte[] payload = in.readNBytes(length);
@@ -195,14 +184,10 @@ public class messageHandler {
             //if and only if we have the complete file/all pieces
             if (fullBitfield()) { peer.getLogger().completeDownload(); }
     
-            // Randomly choose another piece that we don't have and havent requested
-            Random rand = new Random();
-            int reqIndex; 
-            do {
-                reqIndex = rand.nextInt(peer.bitFieldSize);
-            } while (peer.bitfield.getData()[reqIndex] == 1);
+            
+            int reqPiece = randomRequestIndex();
     
-            peer.sendMessage(MessageType.REQUEST, out, in, peerID, reqIndex);
+            peer.sendMessage(MessageType.REQUEST, out, in, peerID, reqPiece);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -240,6 +225,19 @@ public class messageHandler {
             System.out.println("Bad index in numPieces");
         }
         return count;
+    }
+
+    private int randomRequestIndex() {
+        // Randomly choose another piece that we don't have and havent requested
+            Random rand = new Random();
+            int reqIndex = -1; 
+            System.out.println("bitfieldsize = " + peer.bitFieldSize);
+            do { 
+                reqIndex = rand.nextInt(peer.bitFieldSize); 
+            } while ( peer.bitfield.hasPiece(reqIndex) == true || peer.requestedIndices.contains(reqIndex) );
+
+            peer.requestedIndices.add(reqIndex);
+            return(reqIndex);
     }
 
     // sending message to peer
