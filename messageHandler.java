@@ -219,18 +219,26 @@ public class messageHandler {
     }
 
     private void savePiece(byte[] payload, int index) {
-        for (int i = index; i < payload.length; i++)
-        {
+        try{
+            for (int i = index; i < payload.length; i++){
             peer.filebytes[i] = payload[i];
+            }
+        }catch (Exception e) {
+            System.out.println("Bad index in savePiece");
         }
+        
     }
 
     private int numPieces() {
         int count = 0;
-        for (int i = 0; i < peer.filebytes.length; i++) {
-            if (peer.filebytes[i] != 0) count ++;
+        try{
+            
+            for (int i = 0; i < peer.filebytes.length; i++) {
+                if (peer.filebytes[i] != 0) count ++;
+            }
+        }catch (Exception e) {
+            System.out.println("Bad index in numPieces");
         }
-
         return count;
     }
 

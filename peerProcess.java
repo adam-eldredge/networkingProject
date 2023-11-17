@@ -27,7 +27,7 @@ public class peerProcess {
     Server              server              = null;
     Neighbor            optUnchoked;
     messageHandler      messenger           = new messageHandler(this, bitFieldSize);
-    Vector<Neighbor>    neighbors           = new Vector<>();
+    volatile Vector<Neighbor>    neighbors           = new Vector<>();
     Vector<Client>    clients           = new Vector<>();
     Vector<Neighbor>    prefNeighbor        = new Vector<>();
     private Timer timer = null;
@@ -281,6 +281,7 @@ public class peerProcess {
 
     private void updatePrefConnections() {
         // first = peerID, second = download rate
+        try{
         PriorityQueue<Pair> maxPairQueue = new PriorityQueue<>(pairComparator);
         
         // key = peerID, value = connection
@@ -352,12 +353,15 @@ public class peerProcess {
             sendMessage(MessageType.UNCHOKE, current.getOutputStream(), current.getInputStream(), current.neighborID, -1);
             receiveMessage(current.getOutputStream(), current.getInputStream(), current.neighborID);
         }
-        
+        }catch(Exception e){
+            System.out.println("Something went wrong in the updatePrefConnections method");
+        }
 
     }
 
     private void updateOptUnchoked() {
         // Sort the connections by download rate
+        try{
         Vector<Neighbor> candidatePool = new Vector<>();
         Random rand = new Random();
         for (int i = 0; i < neighbors.size(); i++) {
@@ -377,6 +381,9 @@ public class peerProcess {
         } else {
             // Handle the case where there are no valid candidates to choose from.
             return;
+        }
+        }catch(Exception e){
+            System.out.println("Something went wrong in the updateOptUnchoked method");
         }
     }
 
@@ -408,11 +415,4 @@ public class peerProcess {
         return this.logger;
     }
 
-    // public String getBitfieldString() {
-    //     String bitfieldString = "";
-    //     for (int i = 0; i < bitfield.length; i++) {
-    //         bitfieldString += Integer.toString(bitfield[i]);
-    //     }
-    //     return bitfieldString;
-    // }
 }
