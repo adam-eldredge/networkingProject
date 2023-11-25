@@ -268,7 +268,6 @@ public class peerProcess {
     private void updatePrefConnections() {
         // first = peerID, second = download rate
         try{
-            System.out.println("Update pref connections running");
         PriorityQueue<Pair> maxPairQueue = new PriorityQueue<>(pairComparator);
         
         // key = peerID, value = connection
@@ -294,10 +293,8 @@ public class peerProcess {
         //calculate preferred neighbors
         if(fileCompleted){
             // get k random neighbors
-            System.out.println("Neighbors: ");
             for (int i = 0; i < neighbors.size(); i++) {
                 Neighbor current = neighbors.get(i);
-                System.out.println("    ID: " + current.neighborID);
                 if (current.getInterested() && count != 0) {
                     prefNeighbor.add(current);
                     listOfPrefNeighbors.add(Integer.toString(current.neighborID));
@@ -339,15 +336,11 @@ public class peerProcess {
         
         for(int i = 0; i < prefNeighbor.size(); i++){
 
-            System.out.println("Printing list of prefNeighbors: ");
             for (int j = 0; j < prefNeighbor.size(); j++) {
-                System.out.println(prefNeighbor.get(j).neighborID);
             }
             Neighbor current = prefNeighbor.elementAt(i);
 
-            System.out.println("Unchoking a neighbor");
             messenger.sendMessage(MessageType.UNCHOKE, current.getOutputStream(), current.getInputStream(), current.neighborID, -1);
-            System.out.println("Sent message to unchoke neighbor");
 
             // receiveMessage(current.getOutputStream(), current.getInputStream(), current.neighborID);
         }
@@ -401,7 +394,6 @@ public class peerProcess {
 
     public Neighbor getPeer(int peerID) {
         for (int i = 0; i < neighbors.size(); i++) {
-            System.out.println("Comparing neighbor ID: " + neighbors.elementAt(i).neighborID + " with peerID: " + peerID);
             if (neighbors.elementAt(i).neighborID == peerID) {
                 
                 return neighbors.get(i);

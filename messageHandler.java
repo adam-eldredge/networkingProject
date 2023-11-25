@@ -36,25 +36,15 @@ public class messageHandler {
             byte[] payload = new byte[0];
 
             MessageType messageType = MessageType.values()[type];
-            switch (messageType) {
-                case HAVE:
-                    index = Integer.parseInt(msg.substring(5,9), 2);
-                    break;
-                case BITFIELD:
-                    payload = msg.substring(33, 33 + length - 1).getBytes();
-                    break;
-                case REQUEST:
-                    index = Integer.parseInt(msg.substring(33,37), 2);
-                    break;
-                case PIECE:
-                    index = Integer.parseInt(msg.substring(33,37), 2);
-                    payload = msg.substring(33, 33 + length - 1).getBytes();
-                    break;
-                default:
-                    break;
-            }
 
-            System.out.println("Received: " + messageType + "   From: " + peerID + "\n      Length: " + length);
+            System.out.println(
+                "\n| ----- Received New Message -----" + 
+                "\n| Type "+ messageType +
+                "\n| From: " + peerID + 
+                "\n| Length: " + length +
+                "\n| Contents: " + msg +
+                "\n| --------------------------------"
+                );
 
             switch (messageType) {
                 case CHOKE:
@@ -70,15 +60,20 @@ public class messageHandler {
                     handleUninterested(peerID);
                     break;
                 case HAVE:
+                    index = Integer.parseInt(msg.substring(5,37), 2);
                     handleHave(peerID, in, out, index);
                     break;
                 case BITFIELD:
+                    payload = msg.substring(33, 33 + length - 1).getBytes();
                     handleBitfield(peerID, length, in, out, payload);
                     break;
                 case REQUEST:
+                    index = Integer.parseInt(msg.substring(33, 65), 2);
                     handleRequest(peerID, in, out, index);
                     break;
                 case PIECE:
+                    index = Integer.parseInt(msg.substring(33,65), 2);
+                    payload = msg.substring(33, 33 + length - 1).getBytes();
                     handlePiece(peerID, length, in, out, index, payload);
                     break;
                 default:
@@ -158,7 +153,9 @@ public class messageHandler {
     }
 
     private void handleRequest(int peerID, ObjectInputStream in, ObjectOutputStream out, int index) {
+                    System.out.println("Index was " + index);
         if (peer.bitfield.hasPiece(index)) {
+            System.out.println("We have the requested piece so should send");
             peer.sendMessage(MessageType.PIECE, out, in, peerID, index);
         }
     }
@@ -231,7 +228,12 @@ public class messageHandler {
             int pieceIndex) {
         // PeerID is who the message needs to go to
 
-        System.out.println("Sending     : " + type+ "   to: " + peerID + "\n");
+        System.out.println(
+                "\n| ----- Sending New Message -----" + 
+                "\n| Type "+ type +
+                "\n| From: " + peerID +
+                "\n| -------------------------------"
+                );
             switch (type) {
                 case CHOKE:
                     sendChoke(out, in, peerID);
@@ -281,8 +283,6 @@ public class messageHandler {
 
             Neighbor neighbor = peer.getPeer(peerID);
             neighbor.setChoked(true);
-            System.out.println("Just choked peer: " + peerID);
-
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -305,7 +305,6 @@ public class messageHandler {
 
             Neighbor neighbor = peer.getPeer(peerID);
             neighbor.setChoked(true);
-            System.out.println("Just choked peer: " + peerID);
         } catch (IOException e) {
             e.printStackTrace();
         }

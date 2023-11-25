@@ -1,20 +1,6 @@
-[2023-11-24 22:16:51]: Peer 1002 has the preferred neighbors [].
+[2023-11-24 23:57:35]: Peer 1002 has the preferred neighbors [].
  
-[2023-11-24 22:16:51]: Peer 1002 makes a connection to Peer [1001].
+[2023-11-24 23:57:35]: Peer 1002 makes a connection to Peer [1001].
  
-[2023-11-24 22:16:51]: Peer 1002 received the 'not interested' message from [1001].
- 
-[2023-11-24 22:16:56]: Peer 1002 has the preferred neighbors [].
- 
-[2023-11-24 22:17:01]: Peer 1002 has the preferred neighbors [].
- 
-[2023-11-24 22:17:06]: Peer 1002 has the preferred neighbors [].
- 
-[2023-11-24 22:17:11]: Peer 1002 has the preferred neighbors [].
- 
-[2023-11-24 22:17:16]: Peer 1002 has the preferred neighbors [].
- 
-[2023-11-24 22:17:21]: Peer 1002 has the preferred neighbors [].
- 
-[2023-11-24 22:17:26]: Peer 1002 has the preferred neighbors [].
+[2023-11-24 23:57:35]: Peer 1002 received the 'not interested' message from [1001].
  
