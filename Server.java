@@ -72,11 +72,9 @@ public class Server extends Thread{
                 // log connection received
                 serverPeerIntance.getLogger().generateTCPLogReceiver(clientPeerID);
                 
-                // Recieve bitfield
-                serverPeerIntance.receiveMessage(out, in, Integer.parseInt(clientPeerID));
-                // send bitfield
-                //MessageType type, ObjectOutputStream out, ObjectInputStream in, int connectionID, int pieceIndex
+                // Send bitfield
                 serverPeerIntance.sendMessage(MessageType.BITFIELD, out, in,  Integer.parseInt(clientPeerID), -1);
+
                 // receive stream of messages
                 while(true) {
                     serverPeerIntance.receiveMessage(out, in, Integer.parseInt(clientPeerID));

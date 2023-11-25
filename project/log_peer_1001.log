@@ -1,10 +1,26 @@
-[2023-11-17 17:41:06]: Peer 1001 has the preferred neighbors [].
+[2023-11-24 22:16:49]: Peer 1001 has the preferred neighbors [].
  
-[2023-11-17 17:41:10]: Peer 1001 is connected from Peer [1002].
+[2023-11-24 22:16:51]: Peer 1001 is connected from Peer [1002].
  
-[2023-11-17 17:41:10]: Peer 1001 received the 'interested' message from [1002].
+[2023-11-24 22:16:51]: Peer 1001 received the 'interested' message from [1002].
  
-[2023-11-17 17:41:11]: Peer 1001 has the preferred neighbors [1002].
+[2023-11-24 22:16:54]: Peer 1001 has the preferred neighbors [1002].
  
-[2023-11-17 17:41:11]: Peer 1001 received the 'interested' message from [1002].
+[2023-11-24 22:16:59]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-24 22:16:59]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-24 22:17:04]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-24 22:17:09]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-24 22:17:09]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-24 22:17:14]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-24 22:17:19]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-24 22:17:19]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-24 22:17:24]: Peer 1001 has the preferred neighbors [1002].
  
