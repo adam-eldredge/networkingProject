@@ -188,10 +188,13 @@ public class messageHandler {
 
     private void savePiece(byte[] payload, int index) {
         try {
-            for (int i = index; i < payload.length; i++) {
-                peer.filebytes[i] = payload[i];
+            int start = index * (int)peer.pieceSize;
+            int end = start + (int)peer.pieceSize;
+
+            for (int i = start, j = 0; i < end && j < payload.length; i++, j++) {
+                peer.filebytes[i] = payload[j];
             }
-        } catch (Exception e) {
+            } catch (Exception e) {
             System.out.println("Bad index in savePiece");
         }
 
@@ -208,7 +211,7 @@ public class messageHandler {
         } catch (Exception e) {
             System.out.println("Bad index in numPieces");
         }
-        return count;
+        return count / (int)peer.pieceSize;
     }
 
     private int randomRequestIndex() {
