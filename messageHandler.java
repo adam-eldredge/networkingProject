@@ -73,7 +73,7 @@ public class messageHandler {
                     break;
                 case PIECE:
                     index = Integer.parseInt(msg.substring(33,65), 2);
-                    payload = msg.substring(33, 33 + length - 1).getBytes();
+                    payload = msg.substring(65, (int)(65 + peer.pieceSize)).getBytes();
                     handlePiece(peerID, length, in, out, index, payload);
                     break;
                 default:
@@ -431,7 +431,7 @@ public class messageHandler {
             // Payload
             msg += String.format("%32s", Integer.toBinaryString(pieceIndex)).replace(" ", "0");
 
-            msg += (new String(peer.filebytes)).substring(pieceIndex, (int) peer.pieceSize);
+            msg += (new String(peer.filebytes)).substring(pieceIndex, (int) (pieceIndex + peer.pieceSize));
 
             // Send message
             out.writeObject(msg);
