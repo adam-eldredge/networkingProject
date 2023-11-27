@@ -5,12 +5,11 @@ import java.util.Random;
 
 public class messageHandler {
 
-    int bitFieldSize = 10;
+    int bitFieldSize = 0;
     peerProcess peer = null;
 
-    public messageHandler(peerProcess peer, int bitFieldSize) {
+    public messageHandler(peerProcess peer) {
         this.peer = peer;
-        this.bitFieldSize = bitFieldSize;
     }
 
     // decode message - returns message type with payload
@@ -87,17 +86,14 @@ public class messageHandler {
 
     // *** MESSAGE HANDLING *** //
     private void handleChoke(int peerID) {
-        // Neighbor neighbor = peer.getPeer(peerID);
-        // neighbor.setChoked(true);
-        // peer.getLogger().chokedNeighbor(Integer.toString(peerID));
+        peer.getLogger().chokedNeighbor(Integer.toString(peerID));
 
         // DOES THIS NEED TO DO ANYTHING????
     }
 
     private void handleUnchoke(int peerID) {
         Neighbor neighbor = peer.getPeer(peerID);
-        // neighbor.setChoked(false);
-        // peer.getLogger().unchokedNeighbor(Integer.toString(peerID));
+        peer.getLogger().unchokedNeighbor(Integer.toString(peerID));
 
         // Get random index to request
         int reqPiece = randomRequestIndex();
@@ -189,7 +185,11 @@ public class messageHandler {
     private void savePiece(byte[] payload, int index) {
         try {
             int start = index * (int)peer.pieceSize;
-            int end = start + (int)peer.pieceSize;
+            int end = 0;
+            if (index == bitFieldSize - 1) // last piece
+                end = peer.filebytes.length;
+            else // not last piece (full piece)
+                end = start + (int)peer.pieceSize;
 
             for (int i = start, j = 0; i < end && j < payload.length; i++, j++) {
                 peer.filebytes[i] = payload[j];
@@ -203,7 +203,6 @@ public class messageHandler {
     private int numPieces() {
         int count = 0;
         try {
-
             for (int i = 0; i < peer.filebytes.length; i++) {
                 if (peer.filebytes[i] != 0)
                     count++;
@@ -211,7 +210,10 @@ public class messageHandler {
         } catch (Exception e) {
             System.out.println("Bad index in numPieces");
         }
-        return count / (int)peer.pieceSize;
+        int total = count / (int)peer.pieceSize;
+        if (count % (int)peer.pieceSize != 0)
+            total++;
+        return total;
     }
 
     private int randomRequestIndex() {
@@ -219,7 +221,7 @@ public class messageHandler {
         Random rand = new Random();
         int reqIndex = -1;
         do {
-            reqIndex = rand.nextInt(peer.bitFieldSize);
+            reqIndex = rand.nextInt(bitFieldSize);
         } while (peer.bitfield.hasPiece(reqIndex) == true || peer.requestedIndices.contains(reqIndex));
 
         peer.requestedIndices.add(reqIndex);
@@ -421,7 +423,6 @@ public class messageHandler {
     private void sendPiece(ObjectOutputStream out, ObjectInputStream in, int peerID, int pieceIndex) {
         int messageLength = 32 + (int) peer.pieceSize;
         try {
-
             // Message to write
             String msg = "";
 
@@ -434,7 +435,14 @@ public class messageHandler {
             // Payload
             msg += String.format("%32s", Integer.toBinaryString(pieceIndex)).replace(" ", "0");
 
-            msg += (new String(peer.filebytes)).substring(pieceIndex, (int) (pieceIndex + peer.pieceSize));
+            int start = pieceIndex * (int)peer.pieceSize;
+            int end = 0;
+            if (pieceIndex == bitFieldSize - 1) // last piece
+                end = peer.filebytes.length;
+            else // not last piece (full piece)
+                end = start + (int)peer.pieceSize;
+
+            msg += (new String(peer.filebytes)).substring(start, end);
 
             // Send message
             out.writeObject(msg);

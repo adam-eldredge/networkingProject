@@ -20,13 +20,12 @@ public class peerProcess {
     
     // Peer variables
     int ID;
-    int bitFieldSize;
     int portNum;
     Bitfield bitfield;
     byte[] filebytes;
     Server server = null;
     Neighbor optUnchoked;
-    messageHandler messenger = new messageHandler(this, bitFieldSize);
+    messageHandler messenger = new messageHandler(this);
     volatile Vector<Neighbor> neighbors = new Vector<>();
     Vector<Neighbor> prefNeighbor = new Vector<>();
     private Timer timer = null;
@@ -134,7 +133,7 @@ public class peerProcess {
             int size = (int)fileSize/(int)pieceSize;
 
             if ((int)fileSize % (int)pieceSize != 0) {size++;}
-            this.bitFieldSize = size;
+            this.messenger.bitFieldSize = size;
             this.bitfield = new Bitfield(size);
         }
         catch (FileNotFoundException e) { 
