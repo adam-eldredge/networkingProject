@@ -29,7 +29,6 @@ public class peerProcess {
     volatile Vector<Neighbor> neighbors = new Vector<>();
     Vector<Neighbor> prefNeighbor = new Vector<>();
     private Timer timer = null;
-    Vector<Integer> requestedIndices = new Vector<>();
     
 
     // add all data exchanged to this hashmap: key = peerID, value = data amount

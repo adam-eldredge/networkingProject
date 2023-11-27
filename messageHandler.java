@@ -3,6 +3,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Random;
 
+import javax.sound.midi.Soundbank;
+
 public class messageHandler {
 
     int bitFieldSize = 0;
@@ -41,7 +43,7 @@ public class messageHandler {
                 "\n| Type "+ messageType +
                 "\n| From: " + peerID + 
                 "\n| Length: " + length +
-                "\n| Contents: " + msg +
+                // "\n| Contents: " + msg +
                 "\n| --------------------------------"
                 );
 
@@ -88,7 +90,8 @@ public class messageHandler {
     private void handleChoke(int peerID) {
         peer.getLogger().chokedNeighbor(Integer.toString(peerID));
 
-        // DOES THIS NEED TO DO ANYTHING????
+        Neighbor neighbor = peer.getPeer(peerID);
+        neighbor.requestedIndices.clear();
     }
 
     private void handleUnchoke(int peerID) {
@@ -96,7 +99,8 @@ public class messageHandler {
         peer.getLogger().unchokedNeighbor(Integer.toString(peerID));
 
         // Get random index to request
-        int reqPiece = randomRequestIndex();
+        neighbor.requestedIndices.clear();
+        int reqPiece = randomRequestIndex(neighbor);
 
         // Send request
         peer.sendMessage(MessageType.REQUEST, neighbor.getOutputStream(), neighbor.getInputStream(), peerID, reqPiece);
@@ -170,7 +174,11 @@ public class messageHandler {
                 peer.getLogger().completeDownload();
             }
 
-            int reqPiece = randomRequestIndex();
+            Neighbor neighbor = peer.getPeer(peerID);
+            Integer id = peerID;
+            neighbor.requestedIndices.remove(id);
+
+            int reqPiece = randomRequestIndex(neighbor);
 
             peer.sendMessage(MessageType.REQUEST, out, in, peerID, reqPiece);
     }
@@ -184,6 +192,7 @@ public class messageHandler {
 
     private void savePiece(byte[] payload, int index) {
         try {
+            peer.bitfield.setPiece(index);
             int start = index * (int)peer.pieceSize;
             int end = 0;
             if (index == bitFieldSize - 1) // last piece
@@ -216,15 +225,18 @@ public class messageHandler {
         return total;
     }
 
-    private int randomRequestIndex() {
+    private int randomRequestIndex(Neighbor neighbor) {
         // Randomly choose another piece that we don't have and havent requested
         Random rand = new Random();
         int reqIndex = -1;
         do {
             reqIndex = rand.nextInt(bitFieldSize);
-        } while (peer.bitfield.hasPiece(reqIndex) == true || peer.requestedIndices.contains(reqIndex));
+            System.out.println("Requested Index: " + reqIndex);
+            System.out.println(peer.bitfield.hasPiece(reqIndex) == true);
+            System.out.println(neighbor.requestedIndices.contains(reqIndex));
+        } while (peer.bitfield.hasPiece(reqIndex) == true || neighbor.requestedIndices.contains(reqIndex));
 
-        peer.requestedIndices.add(reqIndex);
+        neighbor.requestedIndices.add(reqIndex);
         return (reqIndex);
     }
 

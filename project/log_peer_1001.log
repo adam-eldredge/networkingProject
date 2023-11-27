@@ -1,8 +1,242 @@
-[2023-11-24 23:57:32]: Peer 1001 has the preferred neighbors [].
+[2023-11-27 01:22:05]: Peer 1001 has the preferred neighbors [].
  
-[2023-11-24 23:57:35]: Peer 1001 is connected from Peer [1002].
+[2023-11-27 01:22:07]: Peer 1001 is connected from Peer [1002].
  
-[2023-11-24 23:57:35]: Peer 1001 received the 'interested' message from [1002].
+[2023-11-27 01:22:07]: Peer 1001 received the 'interested' message from [1002].
  
-[2023-11-24 23:57:37]: Peer 1001 has the preferred neighbors [1002].
+[2023-11-27 01:22:10]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:22:15]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:22:15]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:22:20]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:22:25]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:22:25]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:22:30]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:22:35]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:22:35]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:22:40]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:22:45]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:22:45]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:22:50]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:22:55]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:22:55]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:23:00]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:23:05]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:23:05]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:23:10]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:23:15]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:23:15]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:23:20]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:23:25]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:23:25]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:23:30]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:23:35]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:23:35]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:23:40]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:23:45]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:23:45]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:23:50]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:23:55]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:23:55]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:24:00]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:24:05]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:24:05]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:24:10]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:24:15]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:24:15]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:24:20]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:24:25]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:24:25]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:24:30]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:24:35]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:24:35]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:24:40]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:24:45]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:24:45]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:24:50]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:24:55]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:24:55]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:25:00]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:25:05]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:25:05]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:25:10]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:25:15]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:25:15]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:25:20]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:25:25]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:25:25]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:25:30]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:25:35]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:25:35]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:25:40]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:25:45]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:25:45]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:25:50]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:25:55]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:25:55]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:26:00]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:26:05]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:26:05]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:26:10]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:26:15]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:26:15]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:26:20]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:26:25]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:26:25]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:26:30]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:26:35]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:26:35]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:26:40]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:26:45]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:26:45]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:26:50]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:26:55]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:26:55]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:27:00]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:27:05]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:27:05]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:27:10]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:27:15]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:27:15]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:27:20]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:27:25]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:27:25]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:27:30]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:27:35]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:27:35]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:27:40]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:27:45]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:27:45]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:27:50]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:27:55]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:27:55]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:28:00]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:28:05]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:28:05]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:28:10]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:28:15]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:28:15]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:28:20]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:28:25]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:28:25]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:28:30]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:28:35]: Peer 1001 has the preferred neighbors [1002].
+ 
+[2023-11-27 01:28:35]: Peer 1001 has the optimistically unchoked neighbor [1002].
+ 
+[2023-11-27 01:28:40]: Peer 1001 has the preferred neighbors [1002].
  
