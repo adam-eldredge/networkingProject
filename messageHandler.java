@@ -166,21 +166,28 @@ public class messageHandler {
 
             // Find number of pieces after download
             int numPieces = numPieces();
-
             peer.getLogger().downloadPiece(Integer.toString(peerID), index, numPieces);
 
-            // if and only if we have the complete file/all pieces
-            if (fullBitfield()) {
+            if (numPieces == bitFieldSize) {
+                //set hasFile to true
                 peer.getLogger().completeDownload();
+            } else
+            {
+                // if and only if we have the complete file/all pieces
+                if (fullBitfield()) {
+                    peer.getLogger().completeDownload();
+                }
+
+                Neighbor neighbor = peer.getPeer(peerID);
+                Integer id = peerID;
+                neighbor.requestedIndices.remove(id);
+
+                int reqPiece = randomRequestIndex(neighbor);
+
+                peer.sendMessage(MessageType.REQUEST, out, in, peerID, reqPiece);
             }
 
-            Neighbor neighbor = peer.getPeer(peerID);
-            Integer id = peerID;
-            neighbor.requestedIndices.remove(id);
-
-            int reqPiece = randomRequestIndex(neighbor);
-
-            peer.sendMessage(MessageType.REQUEST, out, in, peerID, reqPiece);
+           
     }
 
     private boolean fullBitfield() {

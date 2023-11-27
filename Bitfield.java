@@ -39,7 +39,7 @@ public class Bitfield {
     
     public void setFull(){
         for (int i = 0; i < byteSize; i++) {
-            data[i] = Byte.MAX_VALUE;
+            data[i] = (byte) 0xFF;
         }
     }
 
