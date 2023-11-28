@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.TimeUnit;
 import java.util.Scanner;
 import java.io.*;
 import java.math.BigInteger;
@@ -314,6 +315,7 @@ public class peerProcess {
             // loop through all pref neighbors and send choke to any not in new list
             for (int i = 0; i < prefNeighbor.size(); i++) {
                 Neighbor current = prefNeighbor.get(i);
+
                 if (!newPrefNeighbors.contains(Integer.toString(current.neighborID)) && current.neighborID != optUnchoked.neighborID) {
                     current.setChoked(true);
                     System.out.println("Sending choke to " + current.neighborID);
@@ -322,21 +324,30 @@ public class peerProcess {
                 }
             }
             // update pref neibors with newPrefNeibor O-n^2
+            
             prefNeighbor.clear();
+            
             for (int i = 0; i < newPrefNeighbors.size(); i++) {
                 Neighbor current = getPeer(Integer.parseInt(newPrefNeighbors.get(i)));
                 prefNeighbor.add(current);
             }
 
+            connectionsPrevIntervalDataAmount.clear();
+            logger.changePreferredNeighbors(newPrefNeighbors);
+
 
             // loop pref neighbor and send unchoke to any not choked
             for(int i = 0; i < prefNeighbor.size(); i++){
                 Neighbor current = prefNeighbor.get(i);
+                TimeUnit.SECONDS.sleep(1);
                 if(current != optUnchoked && current.getChoked()){
                     current.setChoked(false);
+                    System.out.println("Sending unchoke to " + current.neighborID);
                     sendMessage(MessageType.UNCHOKE, current.getOutputStream(), current.getInputStream(),
                             current.neighborID, -1);
+                    System.out.println("Sent unchoke to " + current.neighborID);
                     receiveMessage(current.getOutputStream(), current.getInputStream(), current.neighborID);
+                    System.out.println("Received request from " + current.neighborID);
                 }
             }
             
@@ -350,21 +361,15 @@ public class peerProcess {
             //     }
             // }
 
-            connectionsPrevIntervalDataAmount.clear();
+        
 
-            logger.changePreferredNeighbors(newPrefNeighbors);
-
-            // for (int i = 0; i < prefNeighbor.size(); i++) {
-            //     Neighbor current = prefNeighbor.get(i);
-            //     sendMessage(MessageType.UNCHOKE, current.getOutputStream(), current.getInputStream(),
-            //             current.neighborID, -1);
-            //     receiveMessage(current.getOutputStream(), current.getInputStream(), current.neighborID);
-            // }
         } catch (Exception e) {
             System.out.println("Something went wrong in the updatePrefConnections method");
         }
 
     }
+
+
 
     private void updateOptUnchoked() {
         // Sort the connections by download rate
@@ -398,12 +403,14 @@ public class peerProcess {
         }
     }
 
-    synchronized public boolean receiveMessage(ObjectOutputStream out, ObjectInputStream in, int connectionID) {
+    // might need to add synchronized 
+    public boolean receiveMessage(ObjectOutputStream out, ObjectInputStream in, int connectionID) {
         messenger.decodeMessage(out, in, connectionID);
         return true;
     }
 
-    synchronized public boolean sendMessage(MessageType type, ObjectOutputStream out, ObjectInputStream in, int connectionID,
+    //syncronized was causing deadlock
+    public boolean sendMessage(MessageType type, ObjectOutputStream out, ObjectInputStream in, int connectionID,
             int pieceIndex) {
         messenger.sendMessage(type, out, in, connectionID, pieceIndex);
         return true;
