@@ -134,7 +134,21 @@ public class messageHandler {
             }
         }
 
-        if (complete) {neighbor.hasFile = true;}
+        if (complete) {
+            neighbor.hasFile = true;
+        }
+
+        // Determine if interested
+        boolean interested = false;
+        for (int i = 0; i < peer.bitfield.getBitSize(); i++) {
+            if (neighbor.bitfield.hasPiece(i) && !(peer.bitfield.hasPiece(i))) {
+                interested = true;
+            }
+        }
+
+        if (interested) {
+            peer.sendMessage(MessageType.INTERESTED, out, in, peerID, -1);
+        }
 
         peer.getLogger().receiveHave(Integer.toString(peerID), index);
     }
@@ -176,7 +190,8 @@ public class messageHandler {
         int numPieces = numPieces();
         peer.getLogger().downloadPiece(Integer.toString(peerID), index, numPieces);
         for (int i = 0; i < peer.neighbors.size(); i++) {
-            peer.sendMessage(MessageType.HAVE, peer.neighbors.elementAt(i).getOutputStream(), peer.neighbors.elementAt(i).getInputStream(), peer.neighbors.elementAt(i).neighborID, index);
+            peer.sendMessage(MessageType.HAVE, peer.neighbors.elementAt(i).getOutputStream(),
+                    peer.neighbors.elementAt(i).getInputStream(), peer.neighbors.elementAt(i).neighborID, index);
         }
 
         if (numPieces == bitFieldSize) {
@@ -184,9 +199,13 @@ public class messageHandler {
             peer.getLogger().completeDownload();
             peer.fileCompleted = true;
 
-            // Send uninterested - to all of our connections that we were previously interested in
+            System.out.println("I am full");
+
+            // Send uninterested - to all of our connections that we were previously
+            // interested in
             for (int i = 0; i < peer.neighbors.size(); i++) {
-                peer.sendMessage(MessageType.UNINTERESTED, peer.neighbors.elementAt(i).getOutputStream(), peer.neighbors.elementAt(i).getInputStream(), peer.neighbors.elementAt(i).neighborID, -1);
+                peer.sendMessage(MessageType.UNINTERESTED, peer.neighbors.elementAt(i).getOutputStream(),
+                        peer.neighbors.elementAt(i).getInputStream(), peer.neighbors.elementAt(i).neighborID, -1);
             }
         } else {
             Neighbor neighbor = peer.getPeer(peerID);
@@ -202,9 +221,24 @@ public class messageHandler {
             if (interested) {
                 int reqPiece = randomRequestIndex(neighbor);
                 peer.sendMessage(MessageType.REQUEST, out, in, peerID, reqPiece);
-            }
-            else {
+            } else {
                 peer.sendMessage(MessageType.UNINTERESTED, out, in, peerID, -1);
+            }
+
+            for (int i = 0; i < peer.neighbors.size(); i++) {
+                if (peer.neighbors.elementAt(i) != neighbor) {
+                    boolean inter = false;
+                    for (int j = 0; j < peer.bitfield.getBitSize(); j++) {
+                        if (peer.neighbors.elementAt(i).bitfield.hasPiece(j) && !(peer.bitfield.hasPiece(j))) {
+                            inter = true;
+                        }
+                    }
+
+                    if (inter == false) {
+                        peer.sendMessage(MessageType.UNINTERESTED, peer.neighbors.elementAt(i).getOutputStream(),
+                        peer.neighbors.elementAt(i).getInputStream(), peer.neighbors.elementAt(i).neighborID, -1);
+                    }
+                }
             }
         }
     }
