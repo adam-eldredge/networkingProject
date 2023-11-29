@@ -246,6 +246,19 @@ public class peerProcess {
             timer.cancel();
         }
     }
+    public void terminate() {
+        // Close all connections
+        closeNeighborConnections();
+
+        //Might not be needed Close the server
+        //server.closeServer();
+
+        // Close the logger
+        logger.closeLogger();
+
+        // Stop the timer
+        stopTimer();
+    }
 
     private void closeNeighborConnections() {
         // Close all connections
@@ -339,7 +352,7 @@ public class peerProcess {
             // loop pref neighbor and send unchoke to any not choked
             for(int i = 0; i < prefNeighbor.size(); i++){
                 Neighbor current = prefNeighbor.get(i);
-                TimeUnit.SECONDS.sleep(1);
+                // TimeUnit.SECONDS.sleep(1);
                 if(current != optUnchoked && current.getChoked()){
                     current.setChoked(false);
                     System.out.println("Sending unchoke to " + current.neighborID);
