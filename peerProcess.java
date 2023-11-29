@@ -25,12 +25,11 @@ public class peerProcess {
     volatile Bitfield bitfield;
     volatile byte[] filebytes;
     Server server = null;
-    Neighbor optUnchoked;
+    Neighbor optUnchoked = null;
     messageHandler messenger = new messageHandler(this);
     volatile Vector<Neighbor> neighbors = new Vector<>();
     Vector<Neighbor> prefNeighbor = new Vector<>();
     private Timer timer = null;
-    
 
     // add all data exchanged to this hashmap: key = peerID, value = data amount
     volatile HashMap<Integer, Integer> connectionsPrevIntervalDataAmount = new HashMap<>();
@@ -127,7 +126,9 @@ public class peerProcess {
 
             int size = (int) fileSize / (int) pieceSize;
 
-            if ((int)fileSize % (int)pieceSize != 0) {size++;}
+            if ((int) fileSize % (int) pieceSize != 0) {
+                size++;
+            }
             this.messenger.bitFieldSize = size;
             this.bitfield = new Bitfield(size);
         } catch (FileNotFoundException e) {
@@ -219,6 +220,20 @@ public class peerProcess {
 
                     // can potentially terminate here by checking if all peers have the file and
                     // then calling closeNeighborConnections() and stopTimer()
+                    boolean ready = true;
+                    if (neighbors.size() > 0) {
+                        for (int i = 0; i < neighbors.size(); i++) {
+                            if (neighbors.elementAt(i).hasFile == false) {
+                                ready = false;
+                            }
+                        }
+                        if (ready == true && fileCompleted) {
+                            // Time to exit
+                            System.out.println("Bye");
+                            closeNeighborConnections();
+                            stopTimer();
+                        }
+                    }
 
                 }
             }, 0, unchokedIntervalSeconds);
@@ -270,7 +285,7 @@ public class peerProcess {
 
     private void updatePrefConnections() {
         try {
-            
+
             // first = peerID, second = download rate
             // data structure to sort neighbors by download rate
             PriorityQueue<Pair> maxPairQueue = new PriorityQueue<>(pairComparator);
@@ -282,8 +297,8 @@ public class peerProcess {
             // List<String> listOfPrefNeighbors = new ArrayList<String>();
 
             //
-            List<String> newPrefNeighbors = new ArrayList<String>(); 
-            //Vector<Neighbor> prefNeighbor = new Vector<>();
+            List<String> newPrefNeighbors = new ArrayList<String>();
+            // Vector<Neighbor> prefNeighbor = new Vector<>();
 
             int count = numPrefferedConnections;
 
@@ -329,7 +344,8 @@ public class peerProcess {
             for (int i = 0; i < prefNeighbor.size(); i++) {
                 Neighbor current = prefNeighbor.get(i);
 
-                if (!newPrefNeighbors.contains(Integer.toString(current.neighborID)) && current.neighborID != optUnchoked.neighborID) {
+                if (!newPrefNeighbors.contains(Integer.toString(current.neighborID))
+                        && (optUnchoked != null && current.neighborID != optUnchoked.neighborID)) {
                     current.setChoked(true);
                     System.out.println("Sending choke to " + current.neighborID);
                     sendMessage(MessageType.CHOKE, current.getOutputStream(), current.getInputStream(),
@@ -337,9 +353,8 @@ public class peerProcess {
                 }
             }
             // update pref neibors with newPrefNeibor O-n^2
-            
             prefNeighbor.clear();
-            
+
             for (int i = 0; i < newPrefNeighbors.size(); i++) {
                 Neighbor current = getPeer(Integer.parseInt(newPrefNeighbors.get(i)));
                 prefNeighbor.add(current);
@@ -348,9 +363,8 @@ public class peerProcess {
             connectionsPrevIntervalDataAmount.clear();
             logger.changePreferredNeighbors(newPrefNeighbors);
 
-
             // loop pref neighbor and send unchoke to any not choked
-            for(int i = 0; i < prefNeighbor.size(); i++){
+            for (int i = 0; i < prefNeighbor.size(); i++) {
                 Neighbor current = prefNeighbor.get(i);
                 // TimeUnit.SECONDS.sleep(1);
                 if(current != optUnchoked && current.getChoked()){
@@ -359,30 +373,25 @@ public class peerProcess {
                     sendMessage(MessageType.UNCHOKE, current.getOutputStream(), current.getInputStream(),
                             current.neighborID, -1);
                     System.out.println("Sent unchoke to " + current.neighborID);
-                    receiveMessage(current.getOutputStream(), current.getInputStream(), current.neighborID);
-                    System.out.println("Received request from " + current.neighborID);
                 }
             }
-            
+
             // all previous prev neighbors are set to choked unless they are
             // optimisticallyunchoke neighbor
             // for (int i = 0; i < prefNeighbor.size(); i++) {
-            //     Neighbor current = prefNeighbor.get(i);
-            //     if (current != optUnchoked) {
-            //         messenger.sendMessage(MessageType.CHOKE, current.getOutputStream(), current.getInputStream(),
-            //                 current.neighborID, -1);
-            //     }
+            // Neighbor current = prefNeighbor.get(i);
+            // if (current != optUnchoked) {
+            // messenger.sendMessage(MessageType.CHOKE, current.getOutputStream(),
+            // current.getInputStream(),
+            // current.neighborID, -1);
             // }
-
-        
+            // }
 
         } catch (Exception e) {
             System.out.println("Something went wrong in the updatePrefConnections method");
         }
 
     }
-
-
 
     private void updateOptUnchoked() {
         // Sort the connections by download rate
@@ -416,13 +425,13 @@ public class peerProcess {
         }
     }
 
-    // might need to add synchronized 
+    // might need to add synchronized
     public boolean receiveMessage(ObjectOutputStream out, ObjectInputStream in, int connectionID) {
         messenger.decodeMessage(out, in, connectionID);
         return true;
     }
 
-    //syncronized was causing deadlock
+    // syncronized was causing deadlock
     public boolean sendMessage(MessageType type, ObjectOutputStream out, ObjectInputStream in, int connectionID,
             int pieceIndex) {
         messenger.sendMessage(type, out, in, connectionID, pieceIndex);
