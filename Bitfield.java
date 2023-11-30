@@ -1,5 +1,5 @@
 public class Bitfield {
-    private byte[] data;
+    private volatile byte[] data;
     private int byteSize;
     private int bitSize;
     

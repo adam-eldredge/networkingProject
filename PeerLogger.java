@@ -114,7 +114,7 @@ public class PeerLogger{
         Calendar cal = Calendar.getInstance();
         String currTime = this.dateFormat.format(cal.getTime());
         this.logger.log(Level.INFO,
-            "[" + currTime + "]: Peer [" + this.peerId + "] has downloaded the complete file."
+            "[" + currTime + "]: Peer [" + this.peerId + "] has downloaded the complete file.\n"
         );
     }
     public void closeLogger(){

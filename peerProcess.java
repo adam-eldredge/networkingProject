@@ -246,19 +246,13 @@ public class peerProcess {
             long optimisticUnchokedIntervalSeconds = optimisticUnchokeInterval * 1000;
 
 
-            timer.scheduleAtFixedRate(new TimerTask() {
-                @Override
-                public void run() {
-                    checkTermination();
-                }
-            }, 0, 1000); 
-
             // Schedule the updatePrefConnectionsTask to run every 'unchokeInterval'
             // milliseconds
             timer.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
                     // Update the preferred connections
+                    checkTermination();
                     updatePrefConnections();
 
                 }
@@ -270,6 +264,7 @@ public class peerProcess {
                 @Override
                 public void run() {
                     // Update the optimistic unchoked connections
+                    checkTermination();
                     updateOptUnchoked();
 
                     // can potentially terminate here by checking if all peers have the file and
@@ -428,8 +423,11 @@ public class peerProcess {
             // if we dont need to change opt unchoked neighbor (this happens when
             // neighbors.size() == 0 or !current.themInterested || !current.themChoked
             if (!candidatePool.isEmpty()) {
-                sendMessage(MessageType.CHOKE, optUnchoked.getOutputStream(), optUnchoked.getInputStream(),
-                        optUnchoked.neighborID, -1);
+                if(optUnchoked != null){
+                    sendMessage(MessageType.CHOKE, optUnchoked.getOutputStream(), optUnchoked.getInputStream(),
+                    optUnchoked.neighborID, -1);
+                }
+
                 optUnchoked = candidatePool.get(rand.nextInt(candidatePool.size()));
                 logger.changeOptimisticallyUnchokedNeighbors(Integer.toString(optUnchoked.neighborID));
 
@@ -441,7 +439,7 @@ public class peerProcess {
                 logger.changeOptimisticallyUnchokedNeighbors("None");
             }
         } catch (Exception e) {
-            System.out.println("Something went wrong in the updateOptUnchoked method");
+            System.out.println(e);
         }
     }
 

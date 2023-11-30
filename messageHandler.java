@@ -185,6 +185,10 @@ public class messageHandler {
 
     private void handlePiece(int peerID, int length, ObjectInputStream in, ObjectOutputStream out, int index, byte[] payload) {
 
+        if (peer.fileCompleted == true) {
+            // Safety to not re download pieces
+            return;
+        }
         // Download the piece
         savePiece(payload, index);
 
