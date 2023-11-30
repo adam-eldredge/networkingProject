@@ -90,6 +90,7 @@ public class peerProcess {
 
             // Start the peer
             peer.start();
+            System.out.println("end of main method");
 
         } catch (NumberFormatException e) {
             // TODO Auto-generated catch block
@@ -252,7 +253,6 @@ public class peerProcess {
                 }
             }, 0, 1000); 
 
-
             // Schedule the updatePrefConnectionsTask to run every 'unchokeInterval'
             // milliseconds
             timer.scheduleAtFixedRate(new TimerTask() {
@@ -277,6 +277,7 @@ public class peerProcess {
                 }
             }, 0, optimisticUnchokedIntervalSeconds);
         
+            System.out.println("end of start method");
         } catch (Exception e) {
             System.out.println("Something went wrong in the run method");
         }
@@ -284,18 +285,25 @@ public class peerProcess {
     }
     public void terminate() {
         // Stop the timer
+        try{
         if (timer != null) {
             timer.cancel();
         }
 
         // Close all connections
         closeNeighborConnections();
+        System.out.println("Closed all connections");
 
         //Might not be needed Close the server
         server.terminate();
+        System.out.println("Closed the server");
 
         // Close the logger
         logger.closeLogger();
+        System.out.println("Closed the logger");
+        }catch(Exception e){
+            System.out.println("Something went wrong in the terminate method");
+        }
     }
 
     private void closeNeighborConnections() {
@@ -450,6 +458,7 @@ public class peerProcess {
         if (t.get()) {
             System.out.println("All peers have the file, therefore terminating");
             terminate();
+            System.exit(0);
         }
     }
 

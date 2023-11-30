@@ -200,7 +200,7 @@ public class messageHandler {
             // set hasFile to true
             peer.getLogger().completeDownload();
             peer.fileCompleted = true;
-
+            peer.setCompletedPeer(peer.ID);
             System.out.println("I am full");
 
             // Send uninterested - to all of our connections that we were previously

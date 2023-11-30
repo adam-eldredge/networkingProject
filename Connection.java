@@ -53,6 +53,7 @@ public abstract class Connection extends Thread {
         }
     };
     public void terminate() {
+        System.out.println("Connection terminated 55");
         isTerminated = true;
     }
     //Getters 

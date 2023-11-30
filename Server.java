@@ -25,11 +25,8 @@ public class Server extends Thread{
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("New client connected");
                 new Handler(clientSocket, this.hostPeer).start();
-
-                if(isTerminated){
-                    break;
-                }
             }
+            System.out.println("Server terminated");
         }catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -91,10 +88,8 @@ public class Server extends Thread{
                 // receive stream of messages
                 while(!isTerminated) {
                     serverPeerIntance.receiveMessage(out, in, Integer.parseInt(clientPeerID));
-                    if(isTerminated){
-                        break;
-                    }
                 }
+                System.out.println("Server connection terminated");
             }
             catch(Exception classnot){
                 System.err.println("Data received in unknown format");
