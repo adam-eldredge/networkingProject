@@ -5,8 +5,8 @@ import java.net.Socket;
 
 public abstract class Connection extends Thread {
     protected Socket socket;
-    protected ObjectInputStream in;
-    protected ObjectOutputStream out;
+    protected volatile ObjectInputStream in;
+    protected volatile ObjectOutputStream out;
     protected volatile boolean isTerminated = false;
 
     Connection(Socket socket) {

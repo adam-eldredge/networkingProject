@@ -60,4 +60,13 @@ public class Bitfield {
         int offset = index % 8;
         data[byteIndex] |= 1 << (7 - offset);
     }
+
+    public boolean checkFull() {
+        for (int i = 0; i < this.bitSize; i++) {
+            if (this.hasPiece(i) == false) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

@@ -183,68 +183,88 @@ public class messageHandler {
         }
     }
 
-    private void handlePiece(int peerID, int length, ObjectInputStream in, ObjectOutputStream out, int index,
-            byte[] payload) {
+    private void handlePiece(int peerID, int length, ObjectInputStream in, ObjectOutputStream out, int index, byte[] payload) {
 
+        // Download the piece
         savePiece(payload, index);
 
         // Find number of pieces after download
         int numPieces = numPieces();
+
         peer.getLogger().downloadPiece(Integer.toString(peerID), index, numPieces);
+
+        // Send HAVE to all neighbors
         for (int i = 0; i < peer.neighbors.size(); i++) {
-            peer.sendMessage(MessageType.HAVE, peer.neighbors.elementAt(i).getOutputStream(),
-                    peer.neighbors.elementAt(i).getInputStream(), peer.neighbors.elementAt(i).neighborID, index);
+
+            Neighbor connection = peer.neighbors.elementAt(i);
+           
+            // Message details
+            MessageType type = MessageType.HAVE;
+            ObjectOutputStream output = connection.getOutputStream();
+            ObjectInputStream input = connection.getInputStream();
+            int id = connection.neighborID;
+            
+            peer.sendMessage(type, output, input, id, index);
         }
 
-        if (numPieces == bitFieldSize) {
-            // set hasFile to true
+        if (peer.bitfield.checkFull()) {
+
+            // FILE COMPLETE
             peer.getLogger().completeDownload();
             peer.fileCompleted = true;
 
-            System.out.println("I am full");
-
-            // Send uninterested - to all of our connections that we were previously
-            // interested in
+            // SEND UNINTERESTED TO PEERS
             for (int i = 0; i < peer.neighbors.size(); i++) {
-                peer.sendMessage(MessageType.UNINTERESTED, peer.neighbors.elementAt(i).getOutputStream(),
-                        peer.neighbors.elementAt(i).getInputStream(), peer.neighbors.elementAt(i).neighborID, -1);
+
+                Neighbor connection = peer.neighbors.elementAt(i);
+
+                // Message details
+                MessageType type = MessageType.UNINTERESTED;
+                ObjectOutputStream output = connection.getOutputStream();
+                ObjectInputStream input = connection.getInputStream();
+                int id = connection.neighborID;
+
+                peer.sendMessage(type, output, input, id, -1);
             }
-        } else {
+        } 
+        else {
+            // Current Neighbor
             Neighbor neighbor = peer.getPeer(peerID);
 
-            // Figure out if still interested
-            boolean interested = false;
-            for (int i = 0; i < peer.bitfield.getBitSize(); i++) {
-                if (neighbor.bitfield.hasPiece(i) && !(peer.bitfield.hasPiece(i))) {
-                    interested = true;
-                }
-            }
-
-            if (interested) {
-                int reqPiece = randomRequestIndex(neighbor);
-                peer.sendMessage(MessageType.REQUEST, out, in, peerID, reqPiece);
-            } else {
-                peer.sendMessage(MessageType.UNINTERESTED, out, in, peerID, -1);
-            }
-
+            // Check if we are interested in other peers
+            // If still interested in current neighbor, send request as well
             for (int i = 0; i < peer.neighbors.size(); i++) {
-                if (peer.neighbors.elementAt(i) != neighbor) {
-                    boolean inter = false;
-                    for (int j = 0; j < peer.bitfield.getBitSize(); j++) {
-                        if (peer.neighbors.elementAt(i).bitfield.hasPiece(j) && !(peer.bitfield.hasPiece(j))) {
-                            inter = true;
-                        }
-                    }
 
-                    if (inter == false) {
-                        peer.sendMessage(MessageType.UNINTERESTED, peer.neighbors.elementAt(i).getOutputStream(),
-                        peer.neighbors.elementAt(i).getInputStream(), peer.neighbors.elementAt(i).neighborID, -1);
-                    }
+                // Neighbor details
+                Neighbor connection = peer.neighbors.elementAt(i);
+
+                // Message details
+                ObjectOutputStream output = connection.getOutputStream();
+                ObjectInputStream input = connection.getInputStream();
+                int id = connection.neighborID;
+
+                if (areWeInterested(connection) && connection == neighbor) {
+                    int reqPiece = randomRequestIndex(neighbor);
+                    peer.sendMessage(MessageType.REQUEST, output, input, id, reqPiece);
+                }
+                else if (areWeInterested(peer.neighbors.elementAt(i)) == false) {
+                    peer.sendMessage(MessageType.UNINTERESTED, output, input, id, -1);
                 }
             }
         }
     }
 
+    private boolean areWeInterested(Neighbor neighbor) {
+        boolean interested = false;
+        
+        for (int i = 0; i < peer.bitfield.getBitSize(); i++) {
+            if (neighbor.bitfield.hasPiece(i) && !(peer.bitfield.hasPiece(i))) {
+                interested = true;
+            }
+        }
+
+        return interested;
+    }
     private void savePiece(byte[] payload, int index) {
         try {
             peer.bitfield.setPiece(index);
@@ -284,12 +304,21 @@ public class messageHandler {
         // Randomly choose another piece that we don't have and havent requested
         Random rand = new Random();
         int reqIndex = -1;
+        boolean valid;
         do {
             reqIndex = rand.nextInt(bitFieldSize);
-            System.out.println("Requested Index: " + reqIndex);
-            System.out.println(peer.bitfield.hasPiece(reqIndex) == true);
-            System.out.println(neighbor.requestedIndices.contains(reqIndex));
-        } while (peer.bitfield.hasPiece(reqIndex) == true || neighbor.requestedIndices.contains(reqIndex));
+            valid = true;
+
+            // Have we already requested this piece?
+            for (int i = 0; i < peer.neighbors.size(); i++) {
+                Neighbor current = peer.neighbors.elementAt(i);
+                if (current.requestedIndices.contains(reqIndex)) {valid = false;}
+            }
+
+            // Do we already have the piece?
+            if (peer.bitfield.hasPiece(reqIndex) == true) {valid = false;}
+
+        } while (valid == false);
 
         neighbor.requestedIndices.add(reqIndex);
         return (reqIndex);
