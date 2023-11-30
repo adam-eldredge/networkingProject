@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.PriorityQueue;
 import java.util.Comparator;
 import java.nio.file.Files;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class peerProcess {
 
@@ -30,6 +31,14 @@ public class peerProcess {
     volatile Vector<Neighbor> neighbors = new Vector<>();
     Vector<Neighbor> prefNeighbor = new Vector<>();
     private Timer timer = null;
+    // all peers 
+    HashMap<Integer, Boolean> completedPeerTracker = new HashMap<>();
+
+    public void setCompletedPeer(int peerID) {
+        completedPeerTracker.put(peerID, true);
+    }
+
+
 
     // add all data exchanged to this hashmap: key = peerID, value = data amount
     volatile HashMap<Integer, Integer> connectionsPrevIntervalDataAmount = new HashMap<>();
@@ -145,6 +154,8 @@ public class peerProcess {
             File peers = new File("PeerInfo.cfg");
             peerReader = new Scanner(peers);
 
+
+
             while (peerReader.hasNextLine()) {
                 String peerLine = peerReader.nextLine();
                 String[] components = peerLine.split(" ");
@@ -201,6 +212,29 @@ public class peerProcess {
             }
         }
 
+        try {
+            File peers = new File("PeerInfo.cfg");
+            peerReader = new Scanner(peers);
+
+            
+
+            while (peerReader.hasNextLine()) {
+                String peerLine = peerReader.nextLine();
+                String[] components = peerLine.split(" ");
+                // Check the host ID
+                int pID = Integer.parseInt(components[0]);
+
+                completedPeerTracker.put(pID, components[3].equals("1"));
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("Could not find file");
+        } finally {
+            if (peerReader != null) {
+                peerReader.close();
+            }
+        }
+
+
     }
 
     public void start() {
@@ -210,6 +244,15 @@ public class peerProcess {
             long unchokedIntervalSeconds = unchokeInterval * 1000;
             long optimisticUnchokedIntervalSeconds = optimisticUnchokeInterval * 1000;
 
+
+            timer.scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    checkTermination();
+                }
+            }, 0, 1000); 
+
+
             // Schedule the updatePrefConnectionsTask to run every 'unchokeInterval'
             // milliseconds
             timer.scheduleAtFixedRate(new TimerTask() {
@@ -217,23 +260,6 @@ public class peerProcess {
                 public void run() {
                     // Update the preferred connections
                     updatePrefConnections();
-
-                    // can potentially terminate here by checking if all peers have the file and
-                    // then calling closeNeighborConnections() and stopTimer()
-                    boolean ready = true;
-                    if (neighbors.size() > 0) {
-                        for (int i = 0; i < neighbors.size(); i++) {
-                            if (neighbors.elementAt(i).hasFile == false) {
-                                ready = false;
-                            }
-                        }
-                        if (ready == true && fileCompleted) {
-                            // Time to exit
-                            System.out.println("Bye");
-                            closeNeighborConnections();
-                            stopTimer();
-                        }
-                    }
 
                 }
             }, 0, unchokedIntervalSeconds);
@@ -250,6 +276,7 @@ public class peerProcess {
                     // then calling closeNeighborConnections() and stopTimer()
                 }
             }, 0, optimisticUnchokedIntervalSeconds);
+        
         } catch (Exception e) {
             System.out.println("Something went wrong in the run method");
         }
@@ -425,6 +452,22 @@ public class peerProcess {
         }
     }
 
+
+    private void checkTermination() {
+        AtomicBoolean t = new AtomicBoolean(true);
+        completedPeerTracker.forEach((key, value) -> {
+            if (!value) {
+                t.set(false);
+                return;
+            }
+        });
+
+        if (t.get()) {
+            System.out.println("All peers have the file");
+            terminate();
+        }
+    }
+
     // might need to add synchronized
     public boolean receiveMessage(ObjectOutputStream out, ObjectInputStream in, int connectionID) {
         messenger.decodeMessage(out, in, connectionID);
@@ -455,5 +498,6 @@ public class peerProcess {
     public PeerLogger getLogger() {
         return this.logger;
     }
+
 
 }

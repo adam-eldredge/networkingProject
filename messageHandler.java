@@ -135,6 +135,8 @@ public class messageHandler {
         }
 
         if (complete) {
+            int currentPeerID = neighbor.neighborID;
+            peer.setCompletedPeer(currentPeerID);
             neighbor.hasFile = true;
         }
 
