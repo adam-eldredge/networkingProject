@@ -48,10 +48,10 @@ public class Client extends Connection {
 
             while (!isTerminated) {
                 peer.receiveMessage(out, in, neighborID);
-                if(isTerminated) {
-                    break;
-                }
             }
+            System.out.println(isTerminated);
+            System.out.println("Client terminated");
+
         } catch (Exception classnot) {
             System.err.println("Data received in unknown format");
         } finally {

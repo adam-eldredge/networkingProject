@@ -212,6 +212,7 @@ public class messageHandler {
             // FILE COMPLETE
             peer.getLogger().completeDownload();
             peer.fileCompleted = true;
+            peer.setCompletedPeer(peer.ID);
 
             // SEND UNINTERESTED TO PEERS
             for (int i = 0; i < peer.neighbors.size(); i++) {
