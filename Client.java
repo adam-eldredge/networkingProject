@@ -46,8 +46,11 @@ public class Client extends Connection {
             // Send bitfield
             peer.sendMessage(MessageType.BITFIELD, out, in, neighborID, -1);
 
-            while (true) {
+            while (!isTerminated) {
                 peer.receiveMessage(out, in, neighborID);
+                if(isTerminated) {
+                    break;
+                }
             }
         } catch (Exception classnot) {
             System.err.println("Data received in unknown format");

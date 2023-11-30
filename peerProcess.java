@@ -282,31 +282,27 @@ public class peerProcess {
         }
 
     }
-
-    public void stopTimer() {
+    public void terminate() {
+        // Stop the timer
         if (timer != null) {
             timer.cancel();
         }
-    }
-    public void terminate() {
+
         // Close all connections
         closeNeighborConnections();
 
         //Might not be needed Close the server
-        //server.closeServer();
+        server.terminate();
 
         // Close the logger
         logger.closeLogger();
-
-        // Stop the timer
-        stopTimer();
     }
 
     private void closeNeighborConnections() {
         // Close all connections
         for (int i = 0; i < neighbors.size(); i++) {
             Neighbor currentNeighbor = neighbors.get(i);
-            currentNeighbor.getConnection().closeConnection();
+            currentNeighbor.getConnection().terminate();
         }
     }
 
@@ -403,17 +399,6 @@ public class peerProcess {
                 }
             }
 
-            // all previous prev neighbors are set to choked unless they are
-            // optimisticallyunchoke neighbor
-            // for (int i = 0; i < prefNeighbor.size(); i++) {
-            // Neighbor current = prefNeighbor.get(i);
-            // if (current != optUnchoked) {
-            // messenger.sendMessage(MessageType.CHOKE, current.getOutputStream(),
-            // current.getInputStream(),
-            // current.neighborID, -1);
-            // }
-            // }
-
         } catch (Exception e) {
             System.out.println("Something went wrong in the updatePrefConnections method");
         }
@@ -463,7 +448,7 @@ public class peerProcess {
         });
 
         if (t.get()) {
-            System.out.println("All peers have the file");
+            System.out.println("All peers have the file, therefore terminating");
             terminate();
         }
     }

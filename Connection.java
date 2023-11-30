@@ -7,6 +7,7 @@ public abstract class Connection extends Thread {
     protected Socket socket;
     protected ObjectInputStream in;
     protected ObjectOutputStream out;
+    protected volatile boolean isTerminated = false;
 
     Connection(Socket socket) {
         this.socket = socket;
@@ -51,7 +52,9 @@ public abstract class Connection extends Thread {
             ioException.printStackTrace();
         }
     };
-    
+    public void terminate() {
+        isTerminated = true;
+    }
     //Getters 
     public ObjectOutputStream getOutputStream() {
         return out;

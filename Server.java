@@ -6,10 +6,14 @@ public class Server extends Thread{
     peerProcess hostPeer;
     int portNum;
     ServerSocket serverSocket = null;
+    private volatile boolean isTerminated = false;
 
     public Server(peerProcess peer, int portNum) {
         this.hostPeer = peer;
         this.portNum = portNum;
+    }
+    public void terminate() {
+        isTerminated = true;
     }
 
     public void run(){
@@ -17,10 +21,14 @@ public class Server extends Thread{
         try {
             serverSocket = new ServerSocket(portNum);
  
-            while(true) {
+            while(!isTerminated) {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("New client connected");
                 new Handler(clientSocket, this.hostPeer).start();
+
+                if(isTerminated){
+                    break;
+                }
             }
         }catch (IOException e) {
             e.printStackTrace();
@@ -32,6 +40,13 @@ public class Server extends Thread{
                     e.printStackTrace();
                 }
             }
+        }
+    }
+    public void closeSocket() {
+        try {
+            serverSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -74,8 +89,11 @@ public class Server extends Thread{
                 serverPeerIntance.sendMessage(MessageType.BITFIELD, out, in,  Integer.parseInt(clientPeerID), -1);
 
                 // receive stream of messages
-                while(true) {
+                while(!isTerminated) {
                     serverPeerIntance.receiveMessage(out, in, Integer.parseInt(clientPeerID));
+                    if(isTerminated){
+                        break;
+                    }
                 }
             }
             catch(Exception classnot){
