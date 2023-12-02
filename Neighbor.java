@@ -4,7 +4,7 @@ import java.util.Vector;
 
 public class Neighbor {
 
-    public int neighborID; 
+    public int neighborID;
     public String hostName;
     public int portNum;
     public boolean hasFile;
@@ -26,10 +26,10 @@ public class Neighbor {
     public void setChoked(boolean c) {
         this.choked = c;
     }
+
     public void setInterested(boolean c) {
         this.Interested = c;
     }
-
 
     public void updatePeerBitfield(Bitfield bitfield) {
         this.bitfield = bitfield;
@@ -45,15 +45,19 @@ public class Neighbor {
     public Connection getConnection() {
         return socketConnection;
     }
+
     public ObjectOutputStream getOutputStream() {
         return socketConnection.getOutputStream();
     }
+
     public ObjectInputStream getInputStream() {
         return socketConnection.getInputStream();
     }
+
     public boolean getChoked() {
         return choked;
     }
+
     public boolean getInterested() {
         return Interested;
     }

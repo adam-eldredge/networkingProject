@@ -1,8 +1,8 @@
 import java.net.*;
 import java.io.*;
 
-public class Server extends Thread{
-    
+public class Server extends Thread {
+
     peerProcess hostPeer;
     int portNum;
     ServerSocket serverSocket = null;
@@ -12,26 +12,27 @@ public class Server extends Thread{
         this.hostPeer = peer;
         this.portNum = portNum;
     }
+
     public void terminate() {
         isTerminated = true;
     }
 
-    public void run(){
+    public void run() {
         System.out.println("The server is running on port: " + portNum);
         try {
             serverSocket = new ServerSocket(portNum);
- 
-            while(!isTerminated) {
+
+            while (!isTerminated) {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("New client connected");
                 new Handler(clientSocket, this.hostPeer).start();
             }
             System.out.println("Server terminated");
-        }catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            if(serverSocket != null){
-                try{
+            if (serverSocket != null) {
+                try {
                     serverSocket.close();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -39,6 +40,7 @@ public class Server extends Thread{
             }
         }
     }
+
     public void closeSocket() {
         try {
             serverSocket.close();
@@ -47,16 +49,15 @@ public class Server extends Thread{
         }
     }
 
-
     /**
-    * A handler thread class. Handlers are spawned from the listening
-    * loop and are responsible for dealing with a single client's requests.
-    */
+     * A handler thread class. Handlers are spawned from the listening
+     * loop and are responsible for dealing with a single client's requests.
+     */
 
     private static class Handler extends Connection {
 
-        private String message; //message received from the client
-        private String MESSAGE; //uppercase message send to the client
+        private String message; // message received from the client
+        private String MESSAGE; // uppercase message send to the client
         private String clientPeerID;
         private peerProcess serverPeerIntance; // Parent peer of the server
 
@@ -67,11 +68,11 @@ public class Server extends Thread{
 
         @Override
         public void run() {
-            try{
+            try {
                 // receive hansdshake
-                message = (String)in.readObject();
-                String header = message.substring(0,18);
-                String zero = message.substring(18,28); 
+                message = (String) in.readObject();
+                String header = message.substring(0, 18);
+                String zero = message.substring(18, 28);
                 clientPeerID = message.substring(28, 32);
                 // send handshake
                 MESSAGE = header + zero + serverPeerIntance.ID;
@@ -81,27 +82,24 @@ public class Server extends Thread{
                 this.serverPeerIntance.neighbors.add(neighbor);
                 // log connection received
                 serverPeerIntance.getLogger().generateTCPLogReceiver(clientPeerID);
-                
+
                 // Send bitfield
-                serverPeerIntance.sendMessage(MessageType.BITFIELD, out, in,  Integer.parseInt(clientPeerID), -1);
+                serverPeerIntance.sendMessage(MessageType.BITFIELD, out, in, Integer.parseInt(clientPeerID), -1);
 
                 // receive stream of messages
-                while(!isTerminated) {
+                while (!isTerminated) {
                     serverPeerIntance.receiveMessage(out, in, Integer.parseInt(clientPeerID));
                 }
                 System.out.println("Server connection terminated");
-            }
-            catch(Exception classnot){
+            } catch (Exception classnot) {
                 System.err.println("Data received in unknown format");
-            }
-            finally{
-                //Close connections
-                try{
+            } finally {
+                // Close connections
+                try {
                     in.close();
                     out.close();
                     socket.close();
-                }
-                catch(IOException ioException){
+                } catch (IOException ioException) {
                     System.out.println("Disconnect with Client " + clientPeerID);
                 }
             }

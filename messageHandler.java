@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.Map;
 import java.util.Random;
 
 import javax.sound.midi.Soundbank;
@@ -121,6 +122,14 @@ public class messageHandler {
         Neighbor neighbor = peer.getPeer(peerID);
         neighbor.setInterested(false); // They are not interested in us
         System.out.println("Peer " + peerID + " is Uninterested in us.");
+        // loop and display all values in completedPeerTracker
+        for (Map.Entry<Integer, Boolean> entry : peer.completedPeerTracker.entrySet()) {
+            Integer key = entry.getKey();
+            Boolean value = entry.getValue();
+
+            // Do something with key and value
+            System.out.println("Key = " + key + ", Value = " + value);
+        }
         peer.getLogger().receiveNotInterested(Integer.toString(peerID));
     }
 
@@ -166,6 +175,7 @@ public class messageHandler {
         for (int i = 0; i < peer.bitfield.getBitSize(); i++) {
             if (b.hasPiece(i) && !(peer.bitfield.hasPiece(i))) {
                 interested = true;
+                break;
             }
         }
 
@@ -187,11 +197,10 @@ public class messageHandler {
     private void handlePiece(int peerID, int length, ObjectInputStream in, ObjectOutputStream out, int index,
             byte[] payload) {
 
-        if (peer.fileCompleted == true) {
+        if (peer.fileCompleted) {
             // Safety to not re download pieces
             return;
         }
-
 
         // Download the piece
         savePiece(payload, index);
@@ -222,6 +231,7 @@ public class messageHandler {
             peer.fileCompleted = true;
             peer.setCompletedPeer(peer.ID);
 
+            // TODO: can be optomized to send only to peers that we were interested
             // SEND UNINTERESTED TO PEERS
             for (int i = 0; i < peer.neighbors.size(); i++) {
 
@@ -273,9 +283,11 @@ public class messageHandler {
 
         return interested;
     }
+
     private void savePiece(byte[] payload, int index) {
         try {
-            peer.bitfield.setPiece(index);
+            // index = piece index
+
             int start = index * (int) peer.pieceSize;
             int end = 0;
             if (index == bitFieldSize - 1) // last piece
@@ -286,6 +298,7 @@ public class messageHandler {
             for (int i = start, j = 0; i < end && j < payload.length; i++, j++) {
                 peer.filebytes[i] = payload[j];
             }
+            peer.bitfield.setPiece(index);
         } catch (Exception e) {
             System.out.println("Bad index in savePiece");
         }
@@ -523,7 +536,7 @@ public class messageHandler {
         else // not last piece (full piece)
             end = start + (int) peer.pieceSize;
 
-        int messageLength = 33 + (end - start);    
+        int messageLength = 33 + (end - start);
 
         try {
             // Message to write

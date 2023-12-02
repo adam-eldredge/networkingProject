@@ -31,14 +31,12 @@ public class peerProcess {
     volatile Vector<Neighbor> neighbors = new Vector<>();
     Vector<Neighbor> prefNeighbor = new Vector<>();
     private Timer timer = null;
-    // all peers 
-    HashMap<Integer, Boolean> completedPeerTracker = new HashMap<>();
+    // all peers
+    public HashMap<Integer, Boolean> completedPeerTracker = new HashMap<>();
 
     public void setCompletedPeer(int peerID) {
         completedPeerTracker.put(peerID, true);
     }
-
-
 
     // add all data exchanged to this hashmap: key = peerID, value = data amount
     volatile HashMap<Integer, Integer> connectionsPrevIntervalDataAmount = new HashMap<>();
@@ -90,7 +88,6 @@ public class peerProcess {
 
             // Start the peer
             peer.start();
-            System.out.println("end of main method");
 
         } catch (NumberFormatException e) {
             // TODO Auto-generated catch block
@@ -155,8 +152,6 @@ public class peerProcess {
             File peers = new File("PeerInfo.cfg");
             peerReader = new Scanner(peers);
 
-
-
             while (peerReader.hasNextLine()) {
                 String peerLine = peerReader.nextLine();
                 String[] components = peerLine.split(" ");
@@ -217,8 +212,6 @@ public class peerProcess {
             File peers = new File("PeerInfo.cfg");
             peerReader = new Scanner(peers);
 
-            
-
             while (peerReader.hasNextLine()) {
                 String peerLine = peerReader.nextLine();
                 String[] components = peerLine.split(" ");
@@ -235,7 +228,6 @@ public class peerProcess {
             }
         }
 
-
     }
 
     public void start() {
@@ -244,7 +236,6 @@ public class peerProcess {
             timer = new Timer();
             long unchokedIntervalSeconds = unchokeInterval * 1000;
             long optimisticUnchokedIntervalSeconds = optimisticUnchokeInterval * 1000;
-
 
             // Schedule the updatePrefConnectionsTask to run every 'unchokeInterval'
             // milliseconds
@@ -271,32 +262,32 @@ public class peerProcess {
                     // then calling closeNeighborConnections() and stopTimer()
                 }
             }, 0, optimisticUnchokedIntervalSeconds);
-        
-            System.out.println("end of start method");
+
         } catch (Exception e) {
             System.out.println("Something went wrong in the run method");
         }
 
     }
+
     public void terminate() {
         // Stop the timer
-        try{
-        if (timer != null) {
-            timer.cancel();
-        }
+        try {
+            if (timer != null) {
+                timer.cancel();
+            }
 
-        // Close all connections
-        closeNeighborConnections();
-        System.out.println("Closed all connections");
+            // Close all connections
+            closeNeighborConnections();
+            System.out.println("Closed all connections");
 
-        //Might not be needed Close the server
-        server.terminate();
-        System.out.println("Closed the server");
+            // Might not be needed Close the server
+            server.terminate();
+            System.out.println("Closed the server");
 
-        // Close the logger
-        logger.closeLogger();
-        System.out.println("Closed the logger");
-        }catch(Exception e){
+            // Close the logger
+            logger.closeLogger();
+            System.out.println("Closed the logger");
+        } catch (Exception e) {
             System.out.println("Something went wrong in the terminate method");
         }
     }
@@ -393,7 +384,7 @@ public class peerProcess {
             for (int i = 0; i < prefNeighbor.size(); i++) {
                 Neighbor current = prefNeighbor.get(i);
                 // TimeUnit.SECONDS.sleep(1);
-                if(current != optUnchoked && current.getChoked()){
+                if (current != optUnchoked && current.getChoked()) {
                     current.setChoked(false);
                     System.out.println("Sending unchoke to " + current.neighborID);
                     sendMessage(MessageType.UNCHOKE, current.getOutputStream(), current.getInputStream(),
@@ -423,9 +414,9 @@ public class peerProcess {
             // if we dont need to change opt unchoked neighbor (this happens when
             // neighbors.size() == 0 or !current.themInterested || !current.themChoked
             if (!candidatePool.isEmpty()) {
-                if(optUnchoked != null){
+                if (optUnchoked != null) {
                     sendMessage(MessageType.CHOKE, optUnchoked.getOutputStream(), optUnchoked.getInputStream(),
-                    optUnchoked.neighborID, -1);
+                            optUnchoked.neighborID, -1);
                 }
 
                 optUnchoked = candidatePool.get(rand.nextInt(candidatePool.size()));
@@ -442,7 +433,6 @@ public class peerProcess {
             System.out.println(e);
         }
     }
-
 
     private void checkTermination() {
         AtomicBoolean t = new AtomicBoolean(true);
@@ -490,6 +480,5 @@ public class peerProcess {
     public PeerLogger getLogger() {
         return this.logger;
     }
-
 
 }
