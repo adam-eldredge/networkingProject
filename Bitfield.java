@@ -2,6 +2,7 @@ public class Bitfield {
     private volatile byte[] data;
     private int byteSize;
     private int bitSize;
+    private int numPieces = 0;
     
     public Bitfield(byte[] data){
         this.data = data;
@@ -41,6 +42,7 @@ public class Bitfield {
         for (int i = 0; i < byteSize; i++) {
             data[i] = (byte) 0xFF;
         }
+        this.numPieces = bitSize;
     }
 
     public void setEmpty(){
@@ -59,6 +61,16 @@ public class Bitfield {
         int byteIndex = index / 8;
         int offset = index % 8;
         data[byteIndex] |= 1 << (7 - offset);
+
+        incrementPieces();
+    }
+
+    private void incrementPieces() {
+        this.numPieces++;
+    }
+
+    public int getNumPieces() {
+        return this.numPieces;
     }
 
     public boolean checkFull() {

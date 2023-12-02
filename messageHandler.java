@@ -73,7 +73,8 @@ public class messageHandler {
                     break;
                 case PIECE:
                     index = Integer.parseInt(msg.substring(33, 65), 2);
-                    payload = msg.substring(65, (int) (65 + peer.pieceSize)).getBytes();
+
+                    payload = msg.substring(65, length - 33).getBytes();
                     handlePiece(peerID, length, in, out, index, payload);
                     break;
                 default:
@@ -97,7 +98,7 @@ public class messageHandler {
         Neighbor neighbor = peer.getPeer(peerID);
         peer.getLogger().unchokedNeighbor(Integer.toString(peerID));
 
-        if (numPieces() != bitFieldSize) {
+        if (peer.bitfield.getNumPieces() != bitFieldSize) {
             // Get random index to request
             neighbor.requestedIndices.clear();
             int reqPiece = randomRequestIndex(neighbor);
@@ -183,18 +184,20 @@ public class messageHandler {
         }
     }
 
-    private void handlePiece(int peerID, int length, ObjectInputStream in, ObjectOutputStream out, int index, byte[] payload) {
+    private void handlePiece(int peerID, int length, ObjectInputStream in, ObjectOutputStream out, int index,
+            byte[] payload) {
 
         if (peer.fileCompleted == true) {
             // Safety to not re download pieces
             return;
         }
 
+
         // Download the piece
         savePiece(payload, index);
 
         // Find number of pieces after download
-        int numPieces = numPieces();
+        int numPieces = peer.bitfield.getNumPieces();
 
         peer.getLogger().downloadPiece(Integer.toString(peerID), index, numPieces);
 
@@ -202,13 +205,13 @@ public class messageHandler {
         for (int i = 0; i < peer.neighbors.size(); i++) {
 
             Neighbor connection = peer.neighbors.elementAt(i);
-           
+
             // Message details
             MessageType type = MessageType.HAVE;
             ObjectOutputStream output = connection.getOutputStream();
             ObjectInputStream input = connection.getInputStream();
             int id = connection.neighborID;
-            
+
             peer.sendMessage(type, output, input, id, index);
         }
 
@@ -232,8 +235,7 @@ public class messageHandler {
 
                 peer.sendMessage(type, output, input, id, -1);
             }
-        } 
-        else {
+        } else {
             // Current Neighbor
             Neighbor neighbor = peer.getPeer(peerID);
 
@@ -252,8 +254,7 @@ public class messageHandler {
                 if (areWeInterested(connection) && connection == neighbor) {
                     int reqPiece = randomRequestIndex(neighbor);
                     peer.sendMessage(MessageType.REQUEST, output, input, id, reqPiece);
-                }
-                else if (areWeInterested(peer.neighbors.elementAt(i)) == false) {
+                } else if (areWeInterested(peer.neighbors.elementAt(i)) == false) {
                     peer.sendMessage(MessageType.UNINTERESTED, output, input, id, -1);
                 }
             }
@@ -262,7 +263,7 @@ public class messageHandler {
 
     private boolean areWeInterested(Neighbor neighbor) {
         boolean interested = false;
-        
+
         for (int i = 0; i < peer.bitfield.getBitSize(); i++) {
             if (neighbor.bitfield.hasPiece(i) && !(peer.bitfield.hasPiece(i))) {
                 interested = true;
@@ -272,8 +273,6 @@ public class messageHandler {
 
         return interested;
     }
-    
-    
     private void savePiece(byte[] payload, int index) {
         try {
             peer.bitfield.setPiece(index);
@@ -293,22 +292,6 @@ public class messageHandler {
 
     }
 
-    private int numPieces() {
-        int count = 0;
-        try {
-            for (int i = 0; i < peer.filebytes.length; i++) {
-                if (peer.filebytes[i] != 0)
-                    count++;
-            }
-        } catch (Exception e) {
-            System.out.println("Bad index in numPieces");
-        }
-        int total = count / (int) peer.pieceSize;
-        if (count % (int) peer.pieceSize != 0)
-            total++;
-        return total;
-    }
-
     private int randomRequestIndex(Neighbor neighbor) {
         // Randomly choose another piece that we don't have and havent requested
         Random rand = new Random();
@@ -321,11 +304,15 @@ public class messageHandler {
             // Have we already requested this piece?
             for (int i = 0; i < peer.neighbors.size(); i++) {
                 Neighbor current = peer.neighbors.elementAt(i);
-                if (current.requestedIndices.contains(reqIndex)) {valid = false;}
+                if (current.requestedIndices.contains(reqIndex)) {
+                    valid = false;
+                }
             }
 
             // Do we already have the piece?
-            if (peer.bitfield.hasPiece(reqIndex) == true) {valid = false;}
+            if (peer.bitfield.hasPiece(reqIndex) == true) {
+                valid = false;
+            }
 
         } while (valid == false);
 
@@ -528,26 +515,28 @@ public class messageHandler {
     }
 
     private void sendPiece(ObjectOutputStream out, ObjectInputStream in, int peerID, int pieceIndex) {
-        int messageLength = 32 + (int) peer.pieceSize;
+
+        int start = pieceIndex * (int) peer.pieceSize;
+        int end = 0;
+        if (pieceIndex == bitFieldSize - 1) // last piece
+            end = peer.filebytes.length;
+        else // not last piece (full piece)
+            end = start + (int) peer.pieceSize;
+
+        int messageLength = 33 + (end - start);    
+
         try {
             // Message to write
             String msg = "";
 
             // Length
-            msg += String.format("%32s", Integer.toBinaryString(1 + messageLength)).replace(" ", "0");
+            msg += String.format("%32s", Integer.toBinaryString(messageLength)).replace(" ", "0");
 
             // Type
             msg += "7";
 
             // Payload
             msg += String.format("%32s", Integer.toBinaryString(pieceIndex)).replace(" ", "0");
-
-            int start = pieceIndex * (int) peer.pieceSize;
-            int end = 0;
-            if (pieceIndex == bitFieldSize - 1) // last piece
-                end = peer.filebytes.length;
-            else // not last piece (full piece)
-                end = start + (int) peer.pieceSize;
 
             msg += (new String(peer.filebytes)).substring(start, end);
 
