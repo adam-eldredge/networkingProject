@@ -189,6 +189,7 @@ public class messageHandler {
             // Safety to not re download pieces
             return;
         }
+
         // Download the piece
         savePiece(payload, index);
 
@@ -265,11 +266,14 @@ public class messageHandler {
         for (int i = 0; i < peer.bitfield.getBitSize(); i++) {
             if (neighbor.bitfield.hasPiece(i) && !(peer.bitfield.hasPiece(i))) {
                 interested = true;
+                break;
             }
         }
 
         return interested;
     }
+    
+    
     private void savePiece(byte[] payload, int index) {
         try {
             peer.bitfield.setPiece(index);
