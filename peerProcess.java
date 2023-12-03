@@ -37,7 +37,7 @@ public class peerProcess {
     volatile Vector<Neighbor> neighbors = new Vector<>();
 
     // key = peerID, value = neighbor
-    public volatile HashMap<Integer, Neighbor> neighborMap = new HashMap<>();
+    public HashMap<Integer, Neighbor> neighborMap = new HashMap<>();
     
     Vector<Neighbor> prefNeighbor = new Vector<>();
     private Timer timer = null;
@@ -268,8 +268,6 @@ public class peerProcess {
 
         } catch (FileNotFoundException e) {
             System.out.println("Could not find file");
-        } catch (IOException e) {
-            System.out.println("Couldn't read the file");
         } finally {
             if (peerReader != null) {
                 peerReader.close();
@@ -539,6 +537,7 @@ public class peerProcess {
                 return p.isComplete();
             }
         }
+        return false;
     }
 
     public Neighbor getPeer(int peerID) {

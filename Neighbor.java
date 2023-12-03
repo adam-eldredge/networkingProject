@@ -1,6 +1,5 @@
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.sql.Connection;
 import java.util.Vector;
 
 public class Neighbor {
