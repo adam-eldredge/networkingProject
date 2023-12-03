@@ -21,7 +21,7 @@ public abstract class Connection extends Thread {
     }
     Connection(String hostName, int portNum) {
         try{
-            socket = new Socket("localhost", portNum);
+            socket = new Socket(hostName, portNum);
             //initialize inputStream and outputStream
             out = new ObjectOutputStream(socket.getOutputStream());
             out.flush();
