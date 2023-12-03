@@ -1,76 +1,63 @@
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.Vector;
 
 public class Neighbor {
 
-    public int neighborID; 
+    public int neighborID;
     public String hostName;
     public int portNum;
     public boolean hasFile;
-    public Client peerClient;
+    public Connection socketConnection;
+    public ConnectionType type;
+    public Bitfield bitfield;
+    private boolean choked = true; // Do we have them choked
+    private boolean Interested = false; // Them interested in us
 
-    // Bitfield information
-    public int[] neighborBitfield;
-    
-    // State variables
-    public boolean themChoked = true; // Are they choked by us (not them to us)
-    public boolean usChoked = false; // Are we choked by them (not them to us)
-    public boolean themInterested = false;
-    public boolean usInterested = false;
-
-    public Neighbor(peerProcess peerProcessIntance,int peerID, String hostName, int portNum, boolean hasFile) {
+    public Neighbor(Connection connection, int peerID, boolean hasFile, ConnectionType type) {
+        this.socketConnection = connection;
         this.neighborID = peerID;
-        this.hostName = hostName;
-        this.portNum = portNum;
         this.hasFile = hasFile;
-        peerClient = new Client(peerProcessIntance, hostName, portNum, neighborID);
-    }
-
-
-    public void startClient(){
-        peerClient.startConnection();
-    }
-    public void closeClient(){
-        peerClient.closeConnection();
+        this.type = type;
     }
 
     // Setters
-
-    public void setThemChoked(boolean c) {
-        this.themChoked = c;
+    public void setChoked(boolean c) {
+        this.choked = c;
     }
 
-    public void setUsChoked(boolean c) {
-        this.usChoked = c;
+    public void setInterested(boolean c) {
+        this.Interested = c;
     }
 
-    public void setThemInterested(boolean c) {
-        this.themInterested = c;
-    }
-
-    public void setUsInterested(boolean c) {
-        this.usInterested = c;
-    }
-
-    public void updatePeerBitfield(int[] bitfield) {
-        this.neighborBitfield = bitfield;
+    public void updatePeerBitfield(Bitfield bitfield) {
+        this.bitfield = bitfield;
     }
 
     public void clearBitfield() {
-        for (int i = 0; i < neighborBitfield.length; i++) {
-            neighborBitfield[i] = 0;
+        for (int i = 0; i < bitfield.getByteSize(); i++) {
+            bitfield.getData()[i] = 0;
         }
     }
 
     // Getters
-    public Client getClient() {
-        return peerClient;
+    public Connection getConnection() {
+        return socketConnection;
     }
 
     public ObjectOutputStream getOutputStream() {
-        return peerClient.out;
+        return socketConnection.getOutputStream();
     }
+
     public ObjectInputStream getInputStream() {
-        return peerClient.in;
+        return socketConnection.getInputStream();
+    }
+
+    public boolean getChoked() {
+        return choked;
+    }
+
+    public boolean getInterested() {
+        return Interested;
     }
 }
