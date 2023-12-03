@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -20,6 +21,21 @@ public class messageHandler {
         this.peer = peer;
     }
 
+    private int byteArrayToInt(byte[] bytes) {
+        int value = 0;
+        for (int i = 0; i < bytes.length; i++) {
+            value = (value << 8) | (bytes[i] & 0xFF);
+        }
+        return value;
+    }
+    private byte[] intToByteArray(int value) {
+        byte[] result = new byte[4]; // Assuming 4 bytes for an integer
+        result[0] = (byte) (value >> 24);
+        result[1] = (byte) (value >> 16);
+        result[2] = (byte) (value >> 8);
+        result[3] = (byte) value;
+        return result;
+    }
     // decode message - returns message type with payload
     // peerID is who the message came from
 
@@ -27,21 +43,17 @@ public class messageHandler {
     public void decodeMessage(ObjectOutputStream out, ObjectInputStream in, int peerID) {
         try {
 
-            String msg = (String) in.readObject();
-
-            int length = Integer.parseInt(msg.substring(0, 32), 2);
-            int type = Integer.parseInt(msg.substring(32, 33));
-
-            int index = -1;
-            byte[] payload = new byte[0];
-
+            Message receivedMessage = (Message) in.readObject();
+            byte type = receivedMessage.messageType;
+            byte[] messagePayload = receivedMessage.messagePayload;
             MessageType messageType = MessageType.values()[type];
+            int index = -1;
 
             System.out.println(
                     "\n| ----- Received New Message -----" +
                             "\n| Type " + messageType +
                             "\n| From: " + peerID +
-                            "\n| Length: " + length +
+                            "\n| Length: " + receivedMessage.messageLength +
                             // "\n| Contents: " + msg +
                             "\n| --------------------------------");
 
@@ -59,22 +71,24 @@ public class messageHandler {
                     handleUninterested(peerID);
                     break;
                 case HAVE:
-                    index = Integer.parseInt(msg.substring(33, 65), 2);
+                    //index = Integer.parseInt(msg.substring(33, 65), 2);
+                    index = byteArrayToInt(messagePayload);
                     handleHave(peerID, in, out, index);
                     break;
                 case BITFIELD:
-                    payload = msg.substring(33, 33 + length - 1).getBytes();
-                    handleBitfield(peerID, length, in, out, payload);
+
+                    handleBitfield(peerID, in, out, messagePayload);
                     break;
                 case REQUEST:
-                    index = Integer.parseInt(msg.substring(33, 65), 2);
+                    index = byteArrayToInt(messagePayload);
                     handleRequest(peerID, in, out, index);
                     break;
                 case PIECE:
-                    index = Integer.parseInt(msg.substring(33, 65), 2);
+                    int pieceIndex = byteArrayToInt(Arrays.copyOfRange(messagePayload, 0, 4));
+                    byte[] payload = Arrays.copyOfRange(messagePayload, 4, messagePayload.length);
 
-                    payload = msg.substring(65, length - 33).getBytes();
-                    handlePiece(peerID, length, in, out, index, payload);
+                    handlePiece(peerID, in, out, pieceIndex, payload);
+                    
                     break;
                 default:
                     throw new RuntimeException("Invalid message type");
@@ -197,7 +211,7 @@ public class messageHandler {
         peer.getLogger().receiveHave(Integer.toString(peerID), index);
     }
 
-    private void handleBitfield(int peerID, int length, ObjectInputStream in, ObjectOutputStream out, byte[] payload) {
+    private void handleBitfield(int peerID, ObjectInputStream in, ObjectOutputStream out, byte[] payload) {
         Neighbor neighbor = peer.neighborMap.get(peerID);
         neighbor.setPiecesIdxMap(payload);
 
@@ -219,7 +233,7 @@ public class messageHandler {
         }
     }
 
-    private void handlePiece(int peerID, int length, ObjectInputStream in, ObjectOutputStream out, int index,
+    private void handlePiece(int peerID, ObjectInputStream in, ObjectOutputStream out, int index,
             byte[] payload) {
 
         if (peer.fileCompleted) {
@@ -351,20 +365,13 @@ public class messageHandler {
     // *** MESSAGE SENDING *** //
     private void sendChoke(ObjectOutputStream out, ObjectInputStream in, int peerID) {
         try {
-            // Message to write
-            String msg = "";
-
-            // Length
-            msg += String.format("%32s", Integer.toBinaryString(1)).replace(" ", "0");
-
-            // Type
-            msg += "0";
+            Message m = new Message((byte) 0);
 
             // Send message
-            out.writeObject(msg);
+            out.writeObject(m);
             out.flush();
 
-            Neighbor neighbor = peer.getPeer(peerID);
+            Neighbor neighbor = peer.neighborMap.get(peerID);
             neighbor.setChoked(true);
         } catch (IOException e) {
             e.printStackTrace();
@@ -373,20 +380,13 @@ public class messageHandler {
 
     private void sendUnchoke(ObjectOutputStream out, ObjectInputStream in, int peerID) {
         try {
-            // Message to write
-            String msg = "";
-
-            // Length
-            msg += String.format("%32s", Integer.toBinaryString(1)).replace(" ", "0");
-
-            // Type
-            msg += "1";
-
+            Message m = new Message((byte) 1);
+        
             // Send message
-            out.writeObject(msg);
+            out.writeObject(m);
             out.flush();
 
-            Neighbor neighbor = peer.getPeer(peerID);
+            Neighbor neighbor = peer.neighborMap.get(peerID);
             neighbor.setChoked(true);
         } catch (IOException e) {
             e.printStackTrace();
@@ -395,17 +395,10 @@ public class messageHandler {
 
     private void sendInterested(ObjectOutputStream out, ObjectInputStream in, int peerID) {
         try {
-            // Message to write
-            String msg = "";
-
-            // Length
-            msg += String.format("%32s", Integer.toBinaryString(1)).replace(" ", "0");
-
-            // Type
-            msg += "2";
+            Message m = new Message((byte) 2);
 
             // Send message
-            out.writeObject(msg);
+            out.writeObject(m);
             out.flush();
         } catch (IOException e) {
             e.printStackTrace();
@@ -414,18 +407,10 @@ public class messageHandler {
 
     private void sendUninterested(ObjectOutputStream out, ObjectInputStream in, int peerID) {
         try {
-            // Message to write
-            String msg = "";
-
-            // Length
-            msg += String.format("%32s", Integer.toBinaryString(1)).replace(" ", "0");
-            ;
-
-            // Type
-            msg += "3";
+            Message m = new Message((byte) 3);
 
             // Send message
-            out.writeObject(msg);
+            out.writeObject(m);
             out.flush();
         } catch (IOException e) {
             e.printStackTrace();
@@ -434,20 +419,12 @@ public class messageHandler {
 
     private void sendHave(ObjectOutputStream out, ObjectInputStream in, int peerID, int pieceIndex) {
         try {
-            // Message to write
-            String msg = "";
 
-            // Length
-            msg += String.format("%32s", Integer.toBinaryString(33)).replace(" ", "0");
-            ;
+            byte[] payload = intToByteArray(pieceIndex);
+            Message m = new Message((byte) 4, payload); 
 
-            // Type
-            msg += "4";
-
-            // Payload
-            msg += String.format("%32s", Integer.toBinaryString(pieceIndex)).replace(" ", "0");
             // Send message
-            out.writeObject(msg);
+            out.writeObject(m);
             out.flush();
         } catch (IOException e) {
             e.printStackTrace();
@@ -456,22 +433,12 @@ public class messageHandler {
 
     private void sendBitfield(ObjectOutputStream out, ObjectInputStream in, int peerID) {
         try {
-
+            // Message Length(4 bytes)=payload.length+1 / messgae Type(1 byte) / message payload()
             // Message to write
-            String msg = "";
-
-            // Length
-            msg += String.format("%32s", Integer.toBinaryString(peer.bitfield.getByteSize() + 1)).replace(" ", "0");
-            ;
-
-            // Type
-            msg += "5";
-
-            // Payload
-            msg += new String(peer.bitfield.getData());
+            Message m = new Message((byte) 5, peer.piecesIdxMap);
 
             // Send message
-            out.writeObject(msg);
+            out.writeObject(m);
             out.flush();
         } catch (IOException e) {
             e.printStackTrace();
@@ -480,21 +447,11 @@ public class messageHandler {
 
     private void sendRequest(ObjectOutputStream out, ObjectInputStream in, int peerID, int pieceIndex) {
         try {
-            // Message to write
-            String msg = "";
-
-            // Length
-            msg += String.format("%32s", Integer.toBinaryString(33)).replace(" ", "0");
-            ;
-
-            // Type
-            msg += "6";
-
-            // Payload
-            msg += String.format("%32s", Integer.toBinaryString(pieceIndex)).replace(" ", "0");
+            byte[] payload = intToByteArray(pieceIndex); 
+            Message m = new Message((byte) 5, payload); 
 
             // Send message
-            out.writeObject(msg);
+            out.writeObject(m);
             out.flush();
         } catch (IOException e) {
             e.printStackTrace();
@@ -502,33 +459,24 @@ public class messageHandler {
     }
 
     private void sendPiece(ObjectOutputStream out, ObjectInputStream in, int peerID, int pieceIndex) {
-
+        
         int start = pieceIndex * (int) peer.pieceSize;
-        int end = 0;
-        if (pieceIndex == numPieces - 1) // last piece
-            end = peer.filebytes.length;
-        else // not last piece (full piece)
-            end = start + (int) peer.pieceSize;
-
+        int end = (pieceIndex == numPieces - 1) ? peer.filebytes.length : start + (int) peer.pieceSize;
+    
         int messageLength = 33 + (end - start);
-
+    
         try {
-            // Message to write
-            String msg = "";
-
-            // Length
-            msg += String.format("%32s", Integer.toBinaryString(messageLength)).replace(" ", "0");
-
-            // Type
-            msg += "7";
-
-            // Payload
-            msg += String.format("%32s", Integer.toBinaryString(pieceIndex)).replace(" ", "0");
-
-            msg += (new String(peer.filebytes)).substring(start, end);
-
-            // Send message
-            out.writeObject(msg);
+            // Create the payload for the PIECE message
+            byte[] payload = new byte[4 + (end - start)]; 
+            byte[] indexBytes = intToByteArray(pieceIndex);
+            System.arraycopy(indexBytes, 0, payload, 0, 4);
+            System.arraycopy(peer.filebytes, start, payload, 4, end - start);
+    
+            // Create a Message object with PIECE type and payload
+            Message m = new Message((byte) 7, payload);
+    
+            // Send the message
+            out.writeObject(m);
             out.flush();
         } catch (IOException e) {
             e.printStackTrace();

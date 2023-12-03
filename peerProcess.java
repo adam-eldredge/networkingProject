@@ -164,9 +164,6 @@ public class peerProcess {
     }
     
     
-    
-    
-    
     public void setup() {
         Scanner commonReader = null;
         Scanner peerReader = null;
@@ -360,9 +357,8 @@ public class peerProcess {
 
     private void closeNeighborConnections() {
         // Close all connections
-        for (int i = 0; i < neighbors.size(); i++) {
-            Neighbor currentNeighbor = neighbors.get(i);
-            currentNeighbor.getConnection().terminate();
+        for(Neighbor n : neighborMap.values()){
+            n.getConnection().terminate();
         }
     }
 
@@ -388,27 +384,23 @@ public class peerProcess {
             // calculate preferred neighbors
             if (fileCompleted) {
                 // get k random neighbors
-                for (int i = 0; i < neighbors.size(); i++) {
-                    Neighbor current = neighbors.get(i);
-                    if (current.getInterested() && count != 0) {
-                        newPrefNeighbors.add(Integer.toString(current.neighborID));
-                        // listOfPrefNeighbors.add(Integer.toString(current.neighborID));
+                for(Neighbor n : neighborMap.values()){
+                    if(n.getInterested() && count != 0){
+                        newPrefNeighbors.add(Integer.toString(n.neighborID));
                         count--;
                     }
                 }
             } else {
                 // calculate download rate for each interested neighbor
                 // rate = data amount/time(unchokedinterval)
-                for (int i = 0; i < neighbors.size(); i++) {
-                    Neighbor current = neighbors.get(i);
-                    int dataAmount = 0;
-                    if (current.getInterested()) {
-
-                        if (connectionsPrevIntervalDataAmount.containsKey(current.neighborID)) {
-                            dataAmount = connectionsPrevIntervalDataAmount.get(current.neighborID);
+                for(Neighbor n: neighborMap.values()){
+                    if(n.getInterested()){
+                        int dataAmount = 0;
+                        if (connectionsPrevIntervalDataAmount.containsKey(n.neighborID)) {
+                            dataAmount = connectionsPrevIntervalDataAmount.get(n.neighborID);
                         }
-                        maxPairQueue.add(new Pair(current.neighborID, dataAmount / unchokeInterval));
-                        connectionsDownloadRate.put(current.neighborID, current);
+                        maxPairQueue.add(new Pair(n.neighborID, dataAmount / unchokeInterval));
+                        connectionsDownloadRate.put(n.neighborID, n);
                     }
                 }
                 // get preffered connections for top k neighbors with highest download rate
@@ -419,7 +411,6 @@ public class peerProcess {
                     Pair pair = maxPairQueue.poll(); // Get and remove the maximum pair
                     Neighbor current = connectionsDownloadRate.get(pair.key);
                     newPrefNeighbors.add(Integer.toString(current.neighborID));
-                    // listOfPrefNeighbors.add(Integer.toString(current.neighborID));
                 }
             }
 
@@ -439,7 +430,7 @@ public class peerProcess {
             prefNeighbor.clear();
 
             for (int i = 0; i < newPrefNeighbors.size(); i++) {
-                Neighbor current = getPeer(Integer.parseInt(newPrefNeighbors.get(i)));
+                Neighbor current = neighborMap.get(Integer.parseInt(newPrefNeighbors.get(i)));
                 prefNeighbor.add(current);
             }
 
