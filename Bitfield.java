@@ -1,3 +1,4 @@
+
 public class Bitfield {
     private volatile byte[] data;
     private int byteSize;

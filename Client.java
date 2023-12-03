@@ -22,7 +22,7 @@ public class Client extends Connection {
         this.hasFile = hasFile;
 
         // Create a new neighbor for this connection
-        peer.neighbors.add(new Neighbor(this, connectionID, hasFile, ConnectionType.CLIENT));
+        peer.neighborMap.put(connectionID, new Neighbor(this, connectionID, hasFile, ConnectionType.CLIENT));
     }
 
     @Override

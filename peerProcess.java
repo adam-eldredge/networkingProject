@@ -23,16 +23,29 @@ public class peerProcess {
     // Peer variables
     int ID;
     int portNum;
+    volatile int currentNumPieces = 0;
     volatile Bitfield bitfield;
+    //Piecefield piecefield;
+    volatile Piece[] pieces;
+    public byte[] piecesIdxMap; 
+
     volatile byte[] filebytes;
     Server server = null;
     Neighbor optUnchoked = null;
     messageHandler messenger = new messageHandler(this);
+
     volatile Vector<Neighbor> neighbors = new Vector<>();
+
+    // key = peerID, value = neighbor
+    public volatile HashMap<Integer, Neighbor> neighborMap = new HashMap<>();
+    
     Vector<Neighbor> prefNeighbor = new Vector<>();
     private Timer timer = null;
-    // all peers
+
+    // key = peerID, value = true if peer has file
     public HashMap<Integer, Boolean> completedPeerTracker = new HashMap<>();
+    //key = requestedIdx, value = peerID
+    public volatile HashMap<Integer, Integer> requestedIdxTracker = new HashMap<>();
 
     public void setCompletedPeer(int peerID) {
         completedPeerTracker.put(peerID, true);
@@ -99,6 +112,61 @@ public class peerProcess {
 
     }
 
+    private void setupPieces(boolean hasFile) {
+        int numPieces = (int) fileSize / (int) pieceSize;
+        byte[] filebytes;
+
+        if ((int) fileSize % (int) pieceSize != 0) {
+            numPieces++;
+        }
+        this.pieces = new Piece[numPieces];
+
+        if(hasFile){
+            //read bytes from file
+            try {
+                filebytes = Files.readAllBytes(Paths.get(this.filename));
+            } catch (IOException e) {
+                // Handle file reading exception
+                e.printStackTrace();
+                return;
+            }
+        } else {
+            //create empty byte array
+            filebytes = new byte[(int) fileSize];
+        }
+
+        for (int i = 0; i < numPieces; i++) {
+            int startIndex = i * (int)pieceSize;
+            int endIndex = Math.min(startIndex + (int)pieceSize, filebytes.length);
+            
+            byte[] pieceData = Arrays.copyOfRange(filebytes, startIndex, endIndex);
+            this.pieces[i] = new Piece(i, pieceData);
+        }
+    }
+    public void setPiece(int idx, byte[] data){
+        this.pieces[idx].setData(data);
+        updatePiecesIdxMap(idx);
+    }
+    private void updatePiecesIdxMap(int index) {
+        //increment the number of pieces
+        this.currentNumPieces++;
+        int counter = 0;
+        for (byte b : piecesIdxMap) {
+            for (int i = 0; i < 8; i++) { // Assuming 8 bits per byte
+                if (counter == index) {
+                    //change the bit to 1
+                    b |= (1 << (7 - i));
+                    return;
+                }
+                counter++;
+            }
+        }
+    }
+    
+    
+    
+    
+    
     public void setup() {
         Scanner commonReader = null;
         Scanner peerReader = null;
@@ -136,8 +204,8 @@ public class peerProcess {
             if ((int) fileSize % (int) pieceSize != 0) {
                 size++;
             }
-            this.messenger.bitFieldSize = size;
-            this.bitfield = new Bitfield(size);
+            this.messenger.setNumPieces((int) pieceSize);
+
         } catch (FileNotFoundException e) {
             System.out.println("Could not find file");
         } finally {
@@ -163,12 +231,12 @@ public class peerProcess {
 
                     // Set the bitfield and read
                     if (Integer.parseInt(components[3]) == 1) {
-                        this.filebytes = Files.readAllBytes(Paths.get(this.filename));
-                        this.bitfield.setFull();
+                        setupPieces(true);
+                        currentNumPieces = pieces.length;
                         fileCompleted = true;
                     } else {
-                        this.filebytes = new byte[(int) fileSize];
-                        this.bitfield.setEmpty();
+                        currentNumPieces = 0;
+                        setupPieces(false);
                     }
 
                     // start the server
@@ -191,10 +259,10 @@ public class peerProcess {
                 }
             }
 
-            for (int i = 0; i < neighbors.size(); i++) {
-                Neighbor currentNeighbor = neighbors.get(i);
-                if (currentNeighbor.type == ConnectionType.CLIENT) {
-                    currentNeighbor.getConnection().start();
+            // Start all the client connections
+            for(Neighbor n : neighborMap.values()){
+                if(n.type == ConnectionType.CLIENT){
+                    n.getConnection().start();
                 }
             }
 
@@ -464,6 +532,10 @@ public class peerProcess {
     }
 
     // Getters
+
+    public boolean havePiece(int idx){
+        return pieces[idx].isCompleted();
+    }
 
     public Neighbor getPeer(int peerID) {
         for (int i = 0; i < neighbors.size(); i++) {
