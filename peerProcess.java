@@ -534,7 +534,11 @@ public class peerProcess {
     // Getters
 
     public boolean havePiece(int idx){
-        return pieces[idx].isCompleted();
+        for (Piece p: pieces) {
+            if(p.getIndex() == idx){
+                return p.isComplete();
+            }
+        }
     }
 
     public Neighbor getPeer(int peerID) {
