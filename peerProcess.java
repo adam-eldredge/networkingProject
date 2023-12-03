@@ -4,6 +4,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 import java.util.Scanner;
@@ -208,6 +209,7 @@ public class peerProcess {
             }
         }
 
+        // Read peerinfo file
         try {
             File peers = new File("PeerInfo.cfg");
             peerReader = new Scanner(peers);
@@ -217,8 +219,11 @@ public class peerProcess {
                 String[] components = peerLine.split(" ");
                 // Check the host ID
                 int pID = Integer.parseInt(components[0]);
-
-                completedPeerTracker.put(pID, components[3].equals("1"));
+                if(Integer.parseInt(components[3]) == 1) {
+                    setCompletedPeer(pID);
+                } else {
+                    completedPeerTracker.put(pID, false);
+                }
             }
         } catch (FileNotFoundException e) {
             System.out.println("Could not find file");
@@ -276,13 +281,13 @@ public class peerProcess {
                 timer.cancel();
             }
 
-            // Close all connections
-            closeNeighborConnections();
-            System.out.println("Closed all connections");
-
             // Might not be needed Close the server
             server.terminate();
             System.out.println("Closed the server");
+            
+            // Close all connections
+            closeNeighborConnections();
+            System.out.println("Closed all connections");
 
             // Close the logger
             logger.closeLogger();
@@ -436,6 +441,10 @@ public class peerProcess {
 
     private void checkTermination() {
         AtomicBoolean t = new AtomicBoolean(true);
+    
+        // completedPeerTracker.forEach((key, value) -> System.out.println(key + " : " + value));
+
+        System.out.println("====================================");
         completedPeerTracker.forEach((key, value) -> {
             if (!value) {
                 t.set(false);

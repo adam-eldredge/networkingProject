@@ -121,6 +121,8 @@ public class messageHandler {
         Neighbor neighbor = peer.getPeer(peerID);
         neighbor.bitfield.setPiece(index);
 
+        //System.out.println("peer: "+ peerID + " has file: " + neighbor.hasFile);
+
         boolean complete = true;
         for (int i = 0; i < peer.bitfield.getBitSize(); i++) {
             if (neighbor.bitfield.hasPiece(i) == false) {
@@ -133,6 +135,8 @@ public class messageHandler {
             peer.setCompletedPeer(currentPeerID);
             neighbor.hasFile = true;
         }
+
+        // System.out.println("peer: "+ peerID + " has file: " + neighbor.hasFile);
 
         // Determine if interested
         boolean interested = false;
@@ -153,6 +157,19 @@ public class messageHandler {
         Bitfield b = new Bitfield(payload);
         Neighbor neighbor = peer.getPeer(peerID);
         neighbor.bitfield = b;
+
+        boolean complete = true;
+        for (int i = 0; i < peer.bitfield.getBitSize(); i++) {
+            if (neighbor.bitfield.hasPiece(i) == false) {
+                complete = false;
+            }
+        }
+
+        if (complete) {
+            int currentPeerID = neighbor.neighborID;
+            peer.setCompletedPeer(currentPeerID);
+            neighbor.hasFile = true;
+        }
 
         // Compare bitfields
         boolean interested = false;
