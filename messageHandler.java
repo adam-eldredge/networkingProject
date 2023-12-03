@@ -96,7 +96,7 @@ public class messageHandler {
 
     private void handleUnchoke(int peerID) {
         peer.getLogger().unchokedNeighbor(Integer.toString(peerID));
-        Neighbor neighbor = peer.neighborMap(peerID);
+        Neighbor neighbor = peer.neighborMap.get(peerID);
 
         if (!peer.fileCompleted) {
             int reqPiece = randRequestIdx(neighbor);
@@ -134,7 +134,7 @@ public class messageHandler {
 
         } while (valid == false);
 
-        peer.requestedIdxTracker.put(peerID, reqIndex);
+        peer.requestedIdxTracker.put(neighbor.neighborID, reqIndex);
         return reqIndex;
     }
 
@@ -161,7 +161,7 @@ public class messageHandler {
     }
 
     private void handleInterested(int peerID) {
-        Neighbor neighbor = peer.neighborMap(peerID);
+        Neighbor neighbor = peer.neighborMap.get(peerID);
         neighbor.setInterested(true); // They are interested in us
 
         peer.getLogger().receiveInterested(Integer.toString(peerID));
@@ -169,13 +169,13 @@ public class messageHandler {
 
     private void handleUninterested(int peerID) {
         peer.getLogger().receiveNotInterested(Integer.toString(peerID));
-        Neighbor neighbor = peer.neighborMap(peerID);
+        Neighbor neighbor = peer.neighborMap.get(peerID);
         neighbor.setInterested(false); // They are not interested in us
         // System.out.println("Peer " + peerID + " is Uninterested in us.");
     }
 
     private void handleHave(int peerID, ObjectInputStream in, ObjectOutputStream out, int index) {
-        Neighbor neighbor = peer.neighborMap(peerID);
+        Neighbor neighbor = peer.neighborMap.get(peerID);
 
         neighbor.updatePiecesIdxMap(index);
 
@@ -198,7 +198,7 @@ public class messageHandler {
     }
 
     private void handleBitfield(int peerID, int length, ObjectInputStream in, ObjectOutputStream out, byte[] payload) {
-        Neighbor neighbor = peer.neighborMap(peerID);
+        Neighbor neighbor = peer.neighborMap.get(peerID);
         neighbor.setPiecesIdxMap(payload);
 
         // Compare bitfields
@@ -243,7 +243,7 @@ public class messageHandler {
 
             sendMessage(type, output, input, id, index);
         }
-        peer.fileCompleted = (currentNumPieces == numPieces);
+        peer.fileCompleted = (peer.currentNumPieces == numPieces);
 
         if (peer.fileCompleted) {
 
