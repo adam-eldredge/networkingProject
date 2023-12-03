@@ -391,10 +391,8 @@ public class peerProcess {
                 // TimeUnit.SECONDS.sleep(1);
                 if (current != optUnchoked && current.getChoked()) {
                     current.setChoked(false);
-                    System.out.println("Sending unchoke to " + current.neighborID);
                     sendMessage(MessageType.UNCHOKE, current.getOutputStream(), current.getInputStream(),
                             current.neighborID, -1);
-                    System.out.println("Sent unchoke to " + current.neighborID);
                 }
             }
 
@@ -444,7 +442,6 @@ public class peerProcess {
     
         // completedPeerTracker.forEach((key, value) -> System.out.println(key + " : " + value));
 
-        System.out.println("====================================");
         completedPeerTracker.forEach((key, value) -> {
             if (!value) {
                 t.set(false);
@@ -453,6 +450,7 @@ public class peerProcess {
         });
 
         if (t.get()) {
+            System.out.println("====================================");
             System.out.println("All peers have the file, therefore terminating");
             terminate();
             System.exit(0);

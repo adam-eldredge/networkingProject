@@ -23,7 +23,6 @@ public class messageHandler {
             // Read all necessary components
 
             Object obj = in.readObject();
-            System.out.println("Read in an object");
 
             Message msg = null;
 
@@ -33,9 +32,13 @@ public class messageHandler {
                 return;
             }
 
-            System.out.println("Object was valid. Type: " + msg.type);
-
             MessageType type = msg.type;
+
+            System.out.println(
+            "---- RECEIVED MESSAGE ----\n" +
+            "| TYPE : " + type +"\n" +
+            "| FROM : " + peerID + "\n" +
+            "--------------------------");
 
             int length = msg.length;
             switch (type) {
@@ -108,20 +111,12 @@ public class messageHandler {
         Neighbor neighbor = peer.getPeer(peerID);
         neighbor.setInterested(false); // They are not interested in us
         // loop and display all values in completedPeerTracker
-        for (Map.Entry<Integer, Boolean> entry : peer.completedPeerTracker.entrySet()) {
-            Integer key = entry.getKey();
-            Boolean value = entry.getValue();
-
-            // Do something with key and value
-        }
         peer.getLogger().receiveNotInterested(Integer.toString(peerID));
     }
 
     private void handleHave(int peerID, ObjectInputStream in, ObjectOutputStream out, int index) {
         Neighbor neighbor = peer.getPeer(peerID);
         neighbor.bitfield.setPiece(index);
-
-        //System.out.println("peer: "+ peerID + " has file: " + neighbor.hasFile);
 
         boolean complete = true;
         for (int i = 0; i < peer.bitfield.getBitSize(); i++) {
@@ -136,18 +131,20 @@ public class messageHandler {
             neighbor.hasFile = true;
         }
 
-        // System.out.println("peer: "+ peerID + " has file: " + neighbor.hasFile);
+        boolean exit = checkExit();
 
-        // Determine if interested
-        boolean interested = false;
-        for (int i = 0; i < peer.bitfield.getBitSize(); i++) {
-            if (neighbor.bitfield.hasPiece(i) && !(peer.bitfield.hasPiece(i))) {
-                interested = true;
+        if (!exit) {
+            // Determine if interested
+            boolean interested = false;
+            for (int i = 0; i < peer.bitfield.getBitSize(); i++) {
+                if (neighbor.bitfield.hasPiece(i) && !(peer.bitfield.hasPiece(i))) {
+                    interested = true;
+                }
             }
-        }
 
-        if (interested) {
-            peer.sendMessage(MessageType.INTERESTED, out, in, peerID, -1);
+            if (interested) {
+                peer.sendMessage(MessageType.INTERESTED, out, in, peerID, -1);
+            }
         }
 
         peer.getLogger().receiveHave(Integer.toString(peerID), index);
@@ -189,11 +186,7 @@ public class messageHandler {
 
     private void handleRequest(int peerID, ObjectInputStream in, ObjectOutputStream out, int index) {
         if (peer.bitfield.hasPiece(index)) {
-
-            System.out.println("  ------------ We have the piece, sending piece: " + index + " to peerId: " + peerID);
             peer.sendMessage(MessageType.PIECE, out, in, peerID, index);
-        } else {
-            System.out.println("******************************* We dont have the piece");
         }
     }
 
@@ -229,26 +222,28 @@ public class messageHandler {
 
         if (peer.bitfield.checkFull()) {
 
-            // FILE COMPLETE
             peer.getLogger().completeDownload();
             peer.fileCompleted = true;
             peer.setCompletedPeer(peer.ID);
 
-            // TODO: can be optomized to send only to peers that we were interested
-            // SEND UNINTERESTED TO PEERS
-            for (int i = 0; i < peer.neighbors.size(); i++) {
+            boolean exit = checkExit();
 
-                Neighbor connection = peer.neighbors.elementAt(i);
+            if (!exit) {
+                // SEND UNINTERESTED TO PEERS
+                for (int i = 0; i < peer.neighbors.size(); i++) {
 
-                // Message details
-                MessageType type = MessageType.UNINTERESTED;
-                ObjectOutputStream output = connection.getOutputStream();
-                ObjectInputStream input = connection.getInputStream();
-                int id = connection.neighborID;
+                    Neighbor connection = peer.neighbors.elementAt(i);
 
-                System.out.println("ran the end code");
-                peer.sendMessage(type, output, input, id, -1);
+                    // Message details
+                    MessageType type = MessageType.UNINTERESTED;
+                    ObjectOutputStream output = connection.getOutputStream();
+                    ObjectInputStream input = connection.getInputStream();
+                    int id = connection.neighborID;
+
+                    peer.sendMessage(type, output, input, id, -1);
+                }
             }
+
         } else {
             // Current Neighbor
             Neighbor neighbor = peer.getPeer(peerID);
@@ -278,6 +273,30 @@ public class messageHandler {
         }
     }
 
+    private boolean checkExit() {
+        boolean done = true;
+        for (boolean b : peer.completedPeerTracker.values()) {
+            if (!b) {
+                done = false;
+            }
+        }
+
+        if (!peer.fileCompleted) {
+            done = false;
+        }
+
+        if (done) {
+            for (int i = 0; i < peer.neighbors.size(); i++) {
+                System.out.println("Detected complete - termination connections");
+                peer.neighbors.get(i).socketConnection.terminate();
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
     private boolean areWeInterested(Neighbor neighbor) {
         boolean interested = false;
 
@@ -295,9 +314,6 @@ public class messageHandler {
         try {
             // index = piece index
 
-            System.out.println(" ------------ Downloading piece" + index);
-            System.out.println(" ------------ Total piece downloaded: " + (peer.bitfield.getNumPieces() + 1));
-
             int start = index * (int) peer.pieceSize;
             int end = 0;
             if (index == bitFieldSize - 1) // last piece
@@ -312,7 +328,6 @@ public class messageHandler {
         } catch (Exception e) {
             System.out.println("Bad index in savePiece");
         }
-
     }
 
     private int randomRequestIndex(Neighbor neighbor) {
@@ -322,15 +337,12 @@ public class messageHandler {
 
         // Are we done/ requested all pieces?
         boolean makeAReq = false;
-        System.out.println(peer.bitfield.getBitSize());
         for (int i = 0; i < peer.bitfield.getBitSize(); i++) {
             if (peer.bitfield.hasPiece(i) == false || alreadyRequested(i) == false) {
                 makeAReq = true;
             }
         }
         if (makeAReq == false) {
-            System.out.println("We shouldnt need to request it");
-            
             return -1;
         } else {
             do {
@@ -350,6 +362,12 @@ public class messageHandler {
     public synchronized void sendMessage(MessageType type, ObjectOutputStream out, ObjectInputStream in, int peerID,
             int pieceIndex) {
         // PeerID is who the message needs to go to
+
+        System.out.println(
+            "---- SENDING MESSAGE ----\n" +
+            "| TYPE : " + type +"\n" +
+            "| TO : " + peerID + "\n" +
+            "-------------------------");
 
         switch (type) {
             case CHOKE:
@@ -496,8 +514,6 @@ public class messageHandler {
             // Send message
             out.writeObject(msg);
             out.flush();
-
-            System.out.println("Requested Piece: " + pieceIndex);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -530,7 +546,6 @@ public class messageHandler {
 
             out.writeObject(msg);
             out.flush();
-            System.out.println("Wrote the piece to stream: " + msg.index);
         } catch (IOException e) {
             e.printStackTrace();
         }
