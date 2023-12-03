@@ -1,8 +1,14 @@
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+import java.util.Vector;
+
 public class Bitfield {
     private volatile byte[] data;
     private int byteSize;
     private int bitSize;
     private int numPieces = 0;
+    volatile HashMap<Integer, Vector<Integer>> reqIdx = new HashMap<>();
 
     public Bitfield(byte[] data) {
         this.data = data;
@@ -16,6 +22,24 @@ public class Bitfield {
 
     public byte[] getData() {
         return data;
+    }
+
+    public boolean requested(int index) {
+        for (Map.Entry<Integer, Vector<Integer>> entry : reqIdx.entrySet()) {
+            if (entry.getValue().contains(index)) return true;
+        }
+        return false;
+    }
+
+    public void addReqIdx(int peerID, int index) {
+        if (this.reqIdx.get(peerID) == null) {
+            this.reqIdx.put(peerID, new Vector<>());
+        }
+        this.reqIdx.get(peerID).add(index);
+    }
+
+    public void clearReqIdx(int peerID) {
+        this.reqIdx.get(peerID).clear();
     }
 
     public void setData(byte[] data) {
@@ -82,7 +106,6 @@ public class Bitfield {
     }
 
     public boolean checkFull() {
-        System.out.println("bitSize: " + this.bitSize);
         for (int i = 0; i < this.bitSize; i++) {
             if (this.hasPiece(i) == false) {
                 return false;

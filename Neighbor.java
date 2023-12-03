@@ -13,7 +13,6 @@ public class Neighbor {
     public Bitfield bitfield;
     private boolean choked = true; // Do we have them choked
     private boolean Interested = false; // Them interested in us
-    public volatile Vector<Integer> requestedIndices = new Vector<>();
 
     public Neighbor(Connection connection, int peerID, boolean hasFile, ConnectionType type) {
         this.socketConnection = connection;
