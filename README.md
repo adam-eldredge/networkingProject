@@ -63,12 +63,10 @@ How to run our project
 
 Transfer files to remote machines
 - ***Do once***
-- 1. Connect to a remote machine by running ssh username@peerhostname (ej.mercier@storm.cise.ufl.edu)
-- 2. Enter your password 
-- 3. Open a new terminal and type  sftp username@peerhostname, (sftp ej.mercier@storm.cise.ufl.edu)
-- 4. Enter your password
-- 5. put -r "local/file/pathtoproject" ~
-- 6. Run tar -xvf archive_name.tar to untar the project
+- 1. Open a new terminal and type  sftp username@peerhostname, (sftp ej.mercier@storm.cise.ufl.edu)
+- 2. Enter your password
+- 3. put -r "local/file/pathtoproject" 
+- 4. Run tar -xvf archive_name.tar to untar the project
 
 Run project
 - ***Repeat steps for each peer participating in the file share***
