@@ -22,7 +22,7 @@ public abstract class Connection extends Thread {
     Connection(String hostName, int portNum) {
         try{
             // THIS LINE MUST BE SWITCHED TO hostname FOR RUNNING ON CISE MACHINES - THIS IS ONLY FOR LOCAL MACHINE
-            socket = new Socket("localhost", portNum);
+            socket = new Socket(hostName, portNum);
             //initialize inputStream and outputStream
             out = new ObjectOutputStream(socket.getOutputStream());
             out.flush();
