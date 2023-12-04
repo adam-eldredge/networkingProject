@@ -28,10 +28,12 @@ public class Client extends Connection {
     @Override
     public void run() {
         try {
+            System.out.println("Connected to " + hostName + " in port " + portNum);
+
             sendHandshakeMessage();
+            System.out.println("Handshake sent");
 
             this.peer.getLogger().generateTCPLogSender(Integer.toString(neighborID));
-            System.out.println("Connected to " + hostName + " in port " + portNum);
 
             // Wait for handshake response from server
             String handshakeResponse = (String) in.readObject();
@@ -49,7 +51,6 @@ public class Client extends Connection {
             while (!isTerminated) {
                 peer.receiveMessage(out, in, neighborID);
             }
-            System.out.println(isTerminated);
             System.out.println("Client terminated");
 
         } catch (Exception classnot) {

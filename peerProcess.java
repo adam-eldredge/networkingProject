@@ -188,7 +188,6 @@ public class peerProcess {
 
                     // Create a new Client for this connection
                     new Client(this, hostName, portNum, pID, hasFile);
-
                 }
             }
 

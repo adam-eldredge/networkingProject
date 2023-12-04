@@ -21,7 +21,8 @@ public abstract class Connection extends Thread {
     }
     Connection(String hostName, int portNum) {
         try{
-            socket = new Socket(hostName, portNum);
+            // THIS LINE MUST BE SWITCHED TO hostname FOR RUNNING ON CISE MACHINES - THIS IS ONLY FOR LOCAL MACHINE
+            socket = new Socket("localhost", portNum);
             //initialize inputStream and outputStream
             out = new ObjectOutputStream(socket.getOutputStream());
             out.flush();

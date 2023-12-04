@@ -287,7 +287,6 @@ public class messageHandler {
 
         if (done) {
             for (int i = 0; i < peer.neighbors.size(); i++) {
-                System.out.println("Detected complete - termination connections");
                 peer.neighbors.get(i).socketConnection.terminate();
             }
 
